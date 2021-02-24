@@ -1,14 +1,14 @@
 # Multiplayer chess game and AI
 
-## [Multiplayer](https://github.com/nathsten/chess-multiplayer-and-ai/public/multiplayer):
+## [Multiplayer](https://github.com/nathsten/Chess-multiplayer-and-AI/tree/master/public/multiplayer):
 * Using Socket.io with postgreSQL DB to create a real time multiplayer chess game.
 
 * Each game is store with a gamepin, and can be accessed as long as role cookie is set.
 
-## [Local game](https://github.com/nathsten/chess-multiplayer-and-ai/public/local)
+## [Local game](https://github.com/nathsten/Chess-multiplayer-and-AI/tree/master/public/local)
 * Play locally on you computer, 1v1.
 
-## [AI](https://github.com/nathsten/chess-multiplayer-and-ai/public/AI)
+## [AI](https://github.com/nathsten/Chess-multiplayer-and-AI/tree/master/public/AI)
 * Attempt to create an AI using tensorflow.js to play the chess game against you.
 
 ## Gameplay
