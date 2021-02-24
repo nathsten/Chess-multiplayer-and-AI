@@ -16,4 +16,4 @@
 
 ![chessboard](https://user-images.githubusercontent.com/70739893/109026013-907eeb00-76bf-11eb-833a-09a86c6b7c25.png)
 
-* Each part of the string (separated by "/") represents color, type of brick, position x and position y. br,18 = black roock x = 1, y = 8.
+* Each part of the string (separated by "/") represents color, type of brick, position x and position y. br,18 = black rook x = 1, y = 8.
