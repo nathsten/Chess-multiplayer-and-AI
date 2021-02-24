@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online multiplayer</title>
+    <link rel="stylesheet" href="multiplayer.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12"></script>
+    <script src="../BoardAndBricks.js"></script>
+    <script src="../gameplay.js"></script>
+</head>
+<body>
+    <div id="chessRoot" v-bind:class="{chessRootPlaying: gameStarted}">
+        <div id="header">
+            <span id="hText">Online Multiplayer Chess Game</span>
+            <span id="gamePin"></span>
+        </div>
+
+        <div v-if="gameStarted" id="board">
+            <div id="stats"></div>
+
+            <div id="x-axis">
+                <div class="axis xAxis" id="topX" style="position: absolute; height: 38px; width: 600px; left: calc(50% - 301px);"></div>
+                <div class="axis xAxis" id="bottomX" style="position: absolute; bottom: 0px; height: 40px; width: 600px; left: calc(50% - 301px);"></div>
+            </div>
+            <div id="chessBoard">
+                <div id="brickBoard">
+                </div>
+            </div>
+            <div id="y-axis">
+                <div class="axis yAxis" id="topY" style="position: absolute; height: 600px; width: 40px; right: 0px; top: calc(50% - 301px);"></div>
+                <div class="axis yAxis" id="bottomY" style="position: absolute; top: calc(50% - 301px); height: 600px; width: 40px; left: 0px;"></div>
+            </div>
+        </div>
+
+        <div id="guiDiv" v-if="!gameStarted" v-bind:class="{chessRootNotPlaying: !gameStarted}">
+            <div id="createNewGame">
+                <label for="playernameCreate">Playername</label> <br>
+                <input v-on:keydown.enter="createNewGame" type="text" name="playernameCreate" id="playernameCreate" placeholder="playername"> <br>
+                <button v-on:click="createNewGame">Create new game</button>
+            </div>
+            <div id="joinGame">
+                <label for="gamePin">Game pin</label> <br>
+                <input v-on:keydown.enter="joinGame" type="text" name="gamePin" id="gamePinInput" placeholder="game pin"> <br>
+                <label for="playernameJoin">Playername</label> <br>
+                <input v-on:keydown.enter="joinGame" type="text" name="playernameJoin" id="playernameJoin" placeholder="playername"> <br>
+                <button v-on:click="joinGame">Join game</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="multiplayer.js"></script>
+</body>
+</html>
