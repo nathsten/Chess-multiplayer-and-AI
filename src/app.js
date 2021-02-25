@@ -26,10 +26,13 @@ app.use('/AI', express.static('../public/AI'));
 client.connect();
 
 io.on('connection', socket => {
-    console.log("on");
-    socket.on('test', data => {
-        console.log(data);
-    });
+    // console.log("on");
+
+    socket.on('player2Joined', data => {
+        const player2Name = data;
+        console.log(player2Name)
+        socket.emit('player2', {player2Name})
+    })
 })
 
 const gameTypes = [
@@ -37,6 +40,34 @@ const gameTypes = [
     { info: 'Play locally on your computer', text: 'Local' },
     { text: 'Multiplayer', info: 'Play online multiplayer' }
 ]
+
+app.get('/checkActiveGame', async (req, res) => {
+    try{
+        const { cookies } = req;
+        const { gamePin, playername, role, brick } = cookies;
+        const checkGame = await client.query(`
+            SELECT * FROM games
+            where game_pin = '${gamePin}';
+        `);
+        const game = await checkGame.rows;
+        if(game){
+            const { board } = game[0];
+            const obj = {board, gamePin};
+            if(role === "player2") {
+                obj.isPlayer2 = true;
+                obj.player1 = game[0].player1;
+                obj.player2 = game[0].player2;
+            };
+            res.send(obj)
+        }
+        else{
+            res.send({});
+        }
+    }  
+    catch(e){
+        res.send({});
+    } 
+})
 
 app.post('/createNewGame', (req, res) => {
     const { playername } = req.body;
@@ -50,4 +81,36 @@ app.post('/createNewGame', (req, res) => {
     .cookie('role', 'creator', {path: '/'})
     .cookie('brick', 'white', {path: '/'})
     .send({gamePin, startPossition}));
+})
+
+app.post('/joinGame', (req, res) => {
+    const { gamePin, playerName } = req.body;
+    console.log(gamePin);
+    client.query(`
+        SELECT * FROM games
+        where game_pin = '${gamePin}';
+    `)
+    .then(game => {
+        if(game){
+            const { player1, board } = game.rows[0];
+            client.query(`
+                UPDATE games
+                SET player2 = '${playerName}'
+                where game_pin = '${gamePin}';
+            `)
+            .then(() => {
+                res.cookie('gamePin', gamePin, {path: '/'})
+                .cookie('playername', playerName, {path: '/'})
+                .cookie('role', 'player2', {path: '/'})
+                .cookie('brick', 'black', {path: '/'})
+                .send({player1, board, gamePin});
+            })
+        }
+        else{
+            res.send({msg: "Game not found"})
+        }
+    }).catch(e => {
+        res.send({msg: "Game not found"});
+        console.log(e);
+    });
 })

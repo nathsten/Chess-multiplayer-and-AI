@@ -18,16 +18,16 @@
         </div>
 
         <div v-if="gameStarted" id="board">
-            <div id="stats"></div>
+            <div id="stats" class="stats">
+                <div id="statsHeader">Stats:</div>
+                <div id="opponentInfo"></div>
+            </div>
 
             <div id="x-axis">
                 <div class="axis xAxis" id="topX" style="position: absolute; height: 38px; width: 600px; left: calc(50% - 301px);"></div>
                 <div class="axis xAxis" id="bottomX" style="position: absolute; bottom: 0px; height: 40px; width: 600px; left: calc(50% - 301px);"></div>
             </div>
-            <div id="chessBoard">
-                <div id="brickBoard">
-                </div>
-            </div>
+            <div id="chessBoard"></div>
             <div id="y-axis">
                 <div class="axis yAxis" id="topY" style="position: absolute; height: 600px; width: 40px; right: 0px; top: calc(50% - 301px);"></div>
                 <div class="axis yAxis" id="bottomY" style="position: absolute; top: calc(50% - 301px); height: 600px; width: 40px; left: 0px;"></div>

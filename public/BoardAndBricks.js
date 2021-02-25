@@ -47,21 +47,25 @@ const printBoard = (div, axis) => {
             if(i === 1){
                 const marker = new$("div");
                 marker.innerHTML = letters[j-1];
+                marker.className = "marker";
                 bottomX.append(marker);
             }
             if(i === 8){
                 const marker = new$("div");
                 marker.innerHTML = letters[j-1];
+                marker.className = "marker";
                 topX.append(marker);  
             }
             if(j === 1){
                 const marker = new$("div");
                 marker.innerHTML = i;
+                marker.className = "marker";
                 topY.append(marker);
             }
             if(j === 8){
                 const marker = new$("div");
                 marker.innerHTML = i;
+                marker.className = "marker";
                 bottomY.append(marker);
             }
 
@@ -78,6 +82,69 @@ const printBoard = (div, axis) => {
             div.append(brick);
         }
     }
+}
+
+/**
+ * @param {HTMLDivElement} chessBoard 
+ * @param {string} possitions 
+ * @param {{ topX: HTMLDivElement, 
+ *  topY: HTMLDivElement, 
+ *  bottomX: HTMLDivElement, 
+ *  bottomY: HTMLDivElement }}
+ */
+const placeBricks = (chessBoard, possitions, { topX, topY, bottomX, bottomY }) => {
+    chessBoard.innerHTML = "";
+    topX.innerHTML = "";
+    topY.innerHTML = "";
+    bottomX.innerHTML = "";
+    bottomY.innerHTML = "";
+    printBoard(chessBoard, { topX, topY, bottomX, bottomY })
+    possitions.split("/").map(e => e.split(","))
+    .forEach(([b, p]) => {
+        const type = posByType(b);
+        const [x, y] = p.match(/(\d+)/).join("").split("").map(e => +e);
+        const boardPos = {x,y};
+        const div = new$("div");
+        const brick = new Brick(type, boardPos, div);
+        brick.div.classList.add("brick", b[0]);
+        brick.div.id = `${b}${x}${y}`;
+        brick.render();
+        chessBoard.append(brick.div);
+    })
+}
+
+const brickSelect = e => {
+    if(!chess.brickSelected){
+        if(e.target.className.includes("brick")){
+            const { id } = e.target;
+            chess.brickSelected = true;
+            chess.selectedBrick = id;
+            chess.brickIndex = startPossition.split("/").map(e => e.split(",").join("")).indexOf(id);
+        }
+    }
+    else{
+        if(e.target.className.includes("black") || e.target.className.includes("white")){
+            const [ chessBoard, gamePinDiv, statsDiv ] = $("chessBoard,gamePin,stats");
+            const { id } = e.target;
+            chess.newBrick = id;
+            moveBrick(chess.brickIndex, chessBoard);
+            chess.brickSelected = false;
+            chess.selectedBrick = String();
+            chess.brickIndex = Number();
+        }
+    }
+}
+
+/**
+ * @param {number} brickIndex 
+ * @param {HTMLDivElement} chessBoard 
+ */
+const moveBrick = (brickIndex, chessBoard) => {
+    var newStart = startPossition.split("/");
+    newStart[brickIndex] = newStart[brickIndex].split(",")[0] + ',' + chess.newBrick;
+    startPossition = newStart.join("/");
+    const [ topX, bottomX, topY, bottomY ] = $("topX,bottomX,topY,bottomY");
+    placeBricks(chessBoard, startPossition, { topX, bottomX, topY, bottomY })
 }
 
 /**
