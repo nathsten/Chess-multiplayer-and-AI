@@ -21,6 +21,7 @@
             <div id="stats" class="stats">
                 <div id="statsHeader">Stats:</div>
                 <div id="opponentInfo"></div>
+                <button v-on:click="leaveGame" id="leaveGame" class="button">Leave game</button>
             </div>
 
             <div id="x-axis">
@@ -38,7 +39,7 @@
             <div id="createNewGame">
                 <label for="playernameCreate">Playername</label> <br>
                 <input v-on:keydown.enter="createNewGame" type="text" name="playernameCreate" id="playernameCreate" placeholder="playername"> <br>
-                <button v-on:click="createNewGame">Create new game</button>
+                <button class="button" v-on:click="createNewGame">Create new game</button>
             </div>
             <div id="joinGame">
                 <label for="gamePin">Game pin</label> <br>

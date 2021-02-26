@@ -110,12 +110,19 @@ const placeBricks = (chessBoard, possitions, { topX, topY, bottomX, bottomY }) =
         brick.div.id = `${b}${x}${y}`;
         brick.render();
         chessBoard.append(brick.div);
+        if(chess.isPlayer2){
+            document.querySelectorAll(".brick, .marker")
+            .forEach(e => e.classList.add("player2Brick"));
+        }
     })
 }
 
+/**
+ * @param {MouseEvent} e 
+ */
 const brickSelect = e => {
     if(!chess.brickSelected){
-        if(e.target.className.includes("brick")){
+        if(e.target.className.includes("brick") && e.target.id.startsWith(chess.brickColor[0])){
             const { id } = e.target;
             chess.brickSelected = true;
             chess.selectedBrick = id;
@@ -144,7 +151,8 @@ const moveBrick = (brickIndex, chessBoard) => {
     newStart[brickIndex] = newStart[brickIndex].split(",")[0] + ',' + chess.newBrick;
     startPossition = newStart.join("/");
     const [ topX, bottomX, topY, bottomY ] = $("topX,bottomX,topY,bottomY");
-    placeBricks(chessBoard, startPossition, { topX, bottomX, topY, bottomY })
+    // placeBricks(chessBoard, startPossition, { topX, bottomX, topY, bottomY })
+    socket.emit('move', {gamePin: chess.gamePin, startPossition});
 }
 
 /**

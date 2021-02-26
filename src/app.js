@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const socketio = require('socket.io');
 const http = require('http');
 const tf = require('@tensorflow/tfjs');
+const engines = require('consolidate');
 const { genGamePin, startPossition } = require('./appModules');
 const { client } = require('./client');
 const port = 5000 || process.env.PORT;
@@ -12,13 +13,16 @@ const app = express();
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(cookieParser());
+app.engine('hbs', engines.handlebars);
+app.set('indexPage', './views');
+app.set('view engine', 'hbs');
+
 const server = http.createServer(app);
 const io = socketio(server);
 server.listen(port, e => e ? console.log(e) : console.log(`listening on port:${port}`))
 
 app.use(express.static('../public'));
 app.use('/', express.static('../public'));
-app.use('/', express.static('../public/index'));
 app.use('/multiplayer', express.static('../public/multiplayer'));
 app.use('/local', express.static('../public/local'));
 app.use('/AI', express.static('../public/AI'));
@@ -30,8 +34,28 @@ io.on('connection', socket => {
 
     socket.on('player2Joined', data => {
         const player2Name = data;
-        console.log(player2Name)
-        socket.emit('player2', {player2Name})
+        io.emit('player2', player2Name)
+    });
+
+    socket.on('createNewGame', data => {
+        const { gamePin, playerName } = data;
+        socket.join(gamePin);
+    })
+
+    socket.on('joinGame', data => {
+        const { gamePin, playerName } = data;
+
+        socket.join(gamePin);
+    })
+
+    socket.on('move', data => {
+        const { gamePin, startPossition } = data
+        io.to(gamePin).emit('newMove', startPossition);
+        client.query(`
+            UPDATE games
+            SET board = '${startPossition}'
+            where game_pin = '${gamePin}';
+        `)
     })
 })
 
@@ -40,6 +64,10 @@ const gameTypes = [
     { info: 'Play locally on your computer', text: 'Local' },
     { text: 'Multiplayer', info: 'Play online multiplayer' }
 ]
+
+app.get('/', (req, res) => {
+    res.render('index', {gameTypes})
+})
 
 app.get('/checkActiveGame', async (req, res) => {
     try{
@@ -53,10 +81,12 @@ app.get('/checkActiveGame', async (req, res) => {
         if(game){
             const { board } = game[0];
             const obj = {board, gamePin};
+            obj.player1 = game[0].player1;
+            obj.player2 = game[0].player2;
             if(role === "player2") {
                 obj.isPlayer2 = true;
-                obj.player1 = game[0].player1;
-                obj.player2 = game[0].player2;
+                obj.playerName = playername;
+                obj.gamePin = gamePin
             };
             res.send(obj)
         }
@@ -80,31 +110,32 @@ app.post('/createNewGame', (req, res) => {
     .cookie('playername', playername, {path: '/'})
     .cookie('role', 'creator', {path: '/'})
     .cookie('brick', 'white', {path: '/'})
-    .send({gamePin, startPossition}));
+    .send({gamePin, startPossition, playername, gamePin}));
 })
 
 app.post('/joinGame', (req, res) => {
     const { gamePin, playerName } = req.body;
-    console.log(gamePin);
     client.query(`
         SELECT * FROM games
         where game_pin = '${gamePin}';
     `)
     .then(game => {
         if(game){
-            const { player1, board } = game.rows[0];
-            client.query(`
-                UPDATE games
-                SET player2 = '${playerName}'
-                where game_pin = '${gamePin}';
-            `)
-            .then(() => {
-                res.cookie('gamePin', gamePin, {path: '/'})
-                .cookie('playername', playerName, {path: '/'})
-                .cookie('role', 'player2', {path: '/'})
-                .cookie('brick', 'black', {path: '/'})
-                .send({player1, board, gamePin});
-            })
+            // if(game.player2 === ''){
+                const { player1, board } = game.rows[0];
+                client.query(`
+                    UPDATE games
+                    SET player2 = '${playerName}'
+                    where game_pin = '${gamePin}';
+                `)
+                .then(() => {
+                    res.cookie('gamePin', gamePin, {path: '/'})
+                    .cookie('playername', playerName, {path: '/'})
+                    .cookie('role', 'player2', {path: '/'})
+                    .cookie('brick', 'black', {path: '/'})
+                    .send({player1, board, gamePin, playerName});
+                })
+            // }
         }
         else{
             res.send({msg: "Game not found"})
@@ -113,4 +144,12 @@ app.post('/joinGame', (req, res) => {
         res.send({msg: "Game not found"});
         console.log(e);
     });
+})
+
+app.post('/leaveGame', (req, res) => {
+    res.clearCookie('playername')
+    .clearCookie('role')
+    .clearCookie('brick')
+    .clearCookie('gamePin')
+    .send("game left");
 })
