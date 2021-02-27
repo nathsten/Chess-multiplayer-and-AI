@@ -9,12 +9,15 @@ const chess = new Vue({
         gameStarted: false,
         isPlayer2: false,
         brickSelected: false,
+        isMyTurn: false,
         selectedBrick: String(),
         newBrick: String(),
         brickColor: String(),
         brickIndex: Number(),
         gamePin: String(),
-        playerName: String()
+        playerName: String(),
+        opponentName: String(),
+        chats: []
     },
     methods: {
         checkActiveGame: () => {
@@ -29,7 +32,6 @@ const chess = new Vue({
             .then(existingGame => {
                 if(existingGame){
                     startPossition = existingGame.board;
-                    chess.playerName = existingGame.playerName;
                     chess.gamePin = existingGame.gamePin;
                     const [ topX, bottomX, topY, bottomY ] = $("topX,bottomX,topY,bottomY");
                     const [ chessBoard, brickBoard, gamePinDiv, statsDiv, opponentInfo ] = $("chessBoard,brickBoard,gamePin,stats,opponentInfo");
@@ -42,14 +44,16 @@ const chess = new Vue({
                         board.classList.add("player2");
                         document.querySelectorAll(".brick, .marker")
                         .forEach(e => e.classList.add("player2Brick"));
-                        opponentInfo.innerHTML = `Playing against: ${existingGame.player1}`;
                         statsDiv.classList.add("player2Brick");
-                        statsDiv.style.top = "11.5%";
                         socket.emit('player2Joined', existingGame.player2);
+                        chess.playerName = existingGame.player2;
+                        chess.opponentName = existingGame.player1;
                     }
                     else{
                         chess.brickColor = "white";
-                        opponentInfo.innerHTML = `Playing against: ${existingGame.player2}`;
+                        chess.playerName = existingGame.player1;
+                        chess.opponentName = existingGame.player2;
+                        chess.isMyTurn = true;
                     }
                     if(!existingGame.player2){
                         opponentInfo.innerHTML = "Waiting for opponent...";
@@ -83,10 +87,10 @@ const chess = new Vue({
                     startPossition = data.startPossition
                     printBoard(chessBoard, { topX, topY, bottomX, bottomY });
                     placeBricks(chessBoard, startPossition, { topX, topY, bottomX, bottomY });
-                    opponentInfo.innerHTML = "Waiting for opponent...";
                     chessBoard.addEventListener("click", brickSelect);
                     chess.playerName = data.playerName;
                     chess.gamePin = data.gamePin;
+                    chess.isMyTurn = true;
                 })
                 .then(() => {
                     const data = {
@@ -122,6 +126,7 @@ const chess = new Vue({
                     chess.isPlayer2 = true;
                     chess.brickColor = "black";
                     chess.playerName = data.playerName;
+                    chess.opponentName = data.player1;
                     chess.gamePin = data.gamePin;
                     startPossition = data.board;
                     setTimeout(() => {
@@ -136,10 +141,8 @@ const chess = new Vue({
                         bricks.forEach(e => e.classList.add("player2Brick"));
                         const markers = document.querySelectorAll(".marker");
                         markers.forEach(e => e.classList.add("player2Brick"));
-                        opponentInfo.innerHTML = `Playing against: ${data.player1}`;
                         statsDiv.classList.add("player2Brick");
-                        statsDiv.style.top = "11.5%";
-                        socket.emit('player2Joined', {playerName});
+                        socket.emit('player2Joined', {playerName, gamePin: chess.gamePin});
                         chessBoard.addEventListener("click", brickSelect);
                     }, 10);
                 }
@@ -165,7 +168,17 @@ const chess = new Vue({
                     "Content-Type": "application/json"
                 }
             })
+            .then(() => {
+                // socket.emit('disconnect', chess.player2Name);
+            })
             .then(() => location.reload());
+        },
+        sendChatMsg: () => {
+            const [ chatMsgInpt ] = $("chatMsgInpt");
+            const chatMsg = String(chatMsgInpt.value);
+            socket.emit('chatMsg', {chatMsg, sender: chess.playerName, gamePin: chess.gamePin});
+            chatMsgInpt.value = "";
+            chatMsgInpt.focus();
         }
     }
 })
@@ -174,17 +187,26 @@ chess.checkActiveGame();
 socket.on('player2', player2Name => {
     if(!chess.isPlayer2){
         opponentInfo.innerHTML = `Playing against: ${player2Name.playerName}`;
+        chess.opponentName = player2Name.playerName;
     }
 })
 
 socket.on('newMove', data => {
     const [ chessBoard, topX, bottomX, topY, bottomY ] = $("chessBoard,topX,bottomX,topY,bottomY");
-    placeBricks(chessBoard, data, { topX, topY, bottomX, bottomY });
-    startPossition = data;
+    placeBricks(chessBoard, data.startPossition, { topX, topY, bottomX, bottomY });
+    startPossition = data.startPossition;
     if(chess.isPlayer2){
         const [ board ] = $("board");
         board.classList.add("player2");
         document.querySelectorAll(".brick, .marker")
         .forEach(e => e.classList.add("player2Brick"));
     }
+    if(data.color !== chess.brickColor) chess.isMyTurn = true;
+})
+
+socket.on('incommingChatMsg', data => {
+    const { msg, sender } = data;
+    chess.chats.push({sender: sender, text: msg});
+    const [chatBox] = $("chatBox")
+    chatBox.scrollTop = chatBox.scrollHeight;
 })

@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="multiplayer.css">
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12"></script>
     <script src="../BoardAndBricks.js"></script>
-    <script src="../gameplay.js"></script>
+    <script src="../gameLogic.js"></script>
 </head>
 <body>
     <div id="chessRoot" v-bind:class="{chessRootPlaying: gameStarted}">
@@ -20,7 +20,31 @@
         <div v-if="gameStarted" id="board">
             <div id="stats" class="stats">
                 <div id="statsHeader">Stats:</div>
-                <div id="opponentInfo"></div>
+                <div id="opponentInfo"><span v-if="opponentName">Playing against {{ opponentName }}</span>
+                <span v-if="!opponentName">Waiting for opponent...</span></div>
+                <h3>Game Info:</h3>
+                <div id="gameInfo">
+                    <div id="myGameInfoDiv">
+                        <p>{{ playerName }}:</p>
+                        <div class="bricksTaken" id="myBricksTaken"></div>
+                    </div>
+                    <div id="opponentInfoDiv">
+                        <p>{{ opponentName }}:</p>
+                        <div class="bricksTaken" id="opponentBricksTaken"></div>
+                    </div>
+                </div>
+                <div id="gameChatDiv">
+                    <h3>Chat</h3>
+                    <div id="chatBox">
+                        <div v-for="chat in chats" class="chatMsg">
+                            <div>from: {{ chat.sender }}</div>
+                            <div>{{ chat.text}}</div>
+                        </div>
+                    </div>
+                    <div id="chatInput">
+                        <input type="text" name="chatMsg" id="chatMsgInpt" v-on:keyDown.enter="sendChatMsg"> <button class="button" v-on:click="sendChatMsg">send</button>
+                    </div>
+                </div>
                 <button v-on:click="leaveGame" id="leaveGame" class="button">Leave game</button>
             </div>
 
@@ -46,7 +70,7 @@
                 <input v-on:keydown.enter="joinGame" type="text" name="gamePin" id="gamePinInput" placeholder="game pin"> <br>
                 <label for="playernameJoin">Playername</label> <br>
                 <input v-on:keydown.enter="joinGame" type="text" name="playernameJoin" id="playernameJoin" placeholder="playername"> <br>
-                <button v-on:click="joinGame">Join game</button>
+                <button class="button" v-on:click="joinGame">Join game</button>
             </div>
         </div>
     </div>

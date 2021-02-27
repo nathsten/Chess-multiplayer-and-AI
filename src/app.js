@@ -7,6 +7,7 @@ const tf = require('@tensorflow/tfjs');
 const engines = require('consolidate');
 const { genGamePin, startPossition } = require('./appModules');
 const { client } = require('./client');
+const cons = require('consolidate');
 const port = 5000 || process.env.PORT;
 
 const app = express();
@@ -33,8 +34,8 @@ io.on('connection', socket => {
     // console.log("on");
 
     socket.on('player2Joined', data => {
-        const player2Name = data;
-        io.emit('player2', player2Name)
+        const {player2Name, gamePin} = data;
+        io.to(gamePin).emit('player2', player2Name)
     });
 
     socket.on('createNewGame', data => {
@@ -49,14 +50,23 @@ io.on('connection', socket => {
     })
 
     socket.on('move', data => {
-        const { gamePin, startPossition } = data
-        io.to(gamePin).emit('newMove', startPossition);
+        const { gamePin, startPossition, color } = data
+        io.to(gamePin).emit('newMove', {startPossition, color});
         client.query(`
             UPDATE games
             SET board = '${startPossition}'
             where game_pin = '${gamePin}';
-        `)
+        `);
     })
+
+    socket.on('chatMsg', data => {
+        const {chatMsg, sender, gamePin } = data;
+        io.to(gamePin).emit('incommingChatMsg', {msg: chatMsg, sender})
+    })
+
+    // socket.on('disconnect', data => {
+
+    // })
 })
 
 const gameTypes = [
