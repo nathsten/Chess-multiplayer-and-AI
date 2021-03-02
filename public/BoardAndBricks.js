@@ -121,34 +121,38 @@ const placeBricks = (chessBoard, possitions, { topX, topY, bottomX, bottomY }) =
  * @param {MouseEvent} e 
  */
 const brickSelect = e => {
-    if(!chess.brickSelected){
-        if(e.target.className.includes("brick") && e.target.id.startsWith(chess.brickColor[0]) && chess.isMyTurn){
-            const { id } = e.target;
-            chess.brickSelected = true;
-            chess.selectedBrick = id;
-            chess.brickIndex = startPossition.split("/").map(e => e.split(",").join("")).indexOf(id);
-            const brickType = id.split("").filter(e => !+e).join("");
-            const legalMoves = checkBrickMoves(startPossition, chess.brickIndex, brickType);
-            const [ chessBoard ] = $("chessBoard");
-            legalMoves.forEach(move => {
-                chessBoard.childNodes.forEach(c => {
-                    if(c.id === String(move.x) + String(move.y)){
-                        c.classList.add("legalBrick");
+    if(e.target.className.includes("brick") && e.target.id.startsWith(chess.brickColor[0]) && chess.isMyTurn){
+        const { id } = e.target;
+        chess.brickSelected = true;
+        chess.selectedBrick = id;
+        chess.brickIndex = startPossition.split("/").map(e => e.split(",").join("")).indexOf(id);
+        const brickType = id.split("").filter(e => !+e).join("");
+        const legalMoves = checkBrickMoves(startPossition, chess.brickIndex, brickType);;
+        const [ chessBoard ] = $("chessBoard");
+        legalMoves.forEach(move => {
+            chessBoard.childNodes.forEach(c => {
+                if(c.id === String(move.x) + String(move.y)){
+                    c.classList.add("legalBrick");
+                    console.log(c.childNodes.length)
+                    if(c.childNodes.length <= 0){
+                        const d = new$("div");
+                        d.className = "legalBrickIndicator";
+                        d.id = c.id;
+                        c.append(d);
                     }
-                })
+                }
             })
-        }
+        })
     }
-    else{
-        if((e.target.className.includes("black") || e.target.className.includes("white")) &&  e.target.className.includes("legalBrick")){
-            const [ chessBoard, gamePinDiv, statsDiv ] = $("chessBoard,gamePin,stats");
-            const { id } = e.target;
-            chess.newBrick = id;
-            moveBrick(chess.brickIndex, chessBoard);
-            chess.brickSelected = false;
-            chess.selectedBrick = String();
-            chess.brickIndex = Number();
-        }
+    else if((e.target.className.includes("legalBrick") || e.target.className.includes("legalBrickIndicator")) && chess.brickSelected){
+    // if(true){
+        const [ chessBoard, gamePinDiv, statsDiv ] = $("chessBoard,gamePin,stats");
+        const { id } = e.target;
+        chess.newBrick = id;
+        moveBrick(chess.brickIndex, chessBoard);
+        chess.brickSelected = false;
+        chess.selectedBrick = String();
+        chess.brickIndex = Number();
     }
 }
 
@@ -160,8 +164,6 @@ const moveBrick = (brickIndex, chessBoard) => {
     var newStart = startPossition.split("/");
     newStart[brickIndex] = newStart[brickIndex].split(",")[0] + ',' + chess.newBrick;
     startPossition = newStart.join("/");
-    const [ topX, bottomX, topY, bottomY ] = $("topX,bottomX,topY,bottomY");
-    // placeBricks(chessBoard, startPossition, { topX, bottomX, topY, bottomY })
     socket.emit('move', {gamePin: chess.gamePin, startPossition, color: chess.brickColor});
     chess.isMyTurn = false;
 }

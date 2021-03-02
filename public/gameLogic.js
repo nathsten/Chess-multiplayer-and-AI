@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * @param {string} startPossition 
  * @param {number} brickIndex 
@@ -9,39 +10,71 @@ const checkBrickMoves = (startPossition, brickIndex, type) => {
     const thisBrickXY = possitions[brickIndex].split("").filter(e => +e).map(e => +e)
 
     switch(type){
-        case "br":
-            case "bk": break;
-            case "bb": break;
-            case "bQ": break;
-            case "bK": break;
-            case "bp": {
-                if([...possitions[brickIndex]][4] === "7"){
-                    return checkOpenSquare(possitions, type, thisBrickXY, {x: 0, y: -2});
+        case "br": {
+            const x1 = checkOpenSquare(possitions, type, thisBrickXY, {x: 8, y: 0});
+            const x2 = checkOpenSquare(possitions, type, thisBrickXY, {x: -8, y: 0});
+            const y1 = checkOpenSquare(possitions, type, thisBrickXY, {x: 0, y: 8});
+            const y2 = checkOpenSquare(possitions, type, thisBrickXY, {x: 0, y: -8});
+            return x1.concat(x2, y1, y2);;
+        }
+        case "bk": {
+            return [];
+        };
+        case "bb": {
+            return [];
+        };
+        case "bQ": {
+            return [];
+        };
+        case "bK": {
+            return [];
+        };
+        case "bp": {
+            if([...possitions[brickIndex]][4] === "7"){
+                return checkOpenSquare(possitions, type, thisBrickXY, {x: 0, y: -2});
+            }
+            else{
+                return checkOpenSquare(possitions, type, thisBrickXY, {x: 0, y: -1});
+            }
+        };
+
+        // white
+        case "wr": {
+            const x1 = checkOpenSquare(possitions, type, thisBrickXY, {x: 8, y: 0});
+            const x2 = checkOpenSquare(possitions, type, thisBrickXY, {x: -8, y: 0});
+            const y1 = checkOpenSquare(possitions, type, thisBrickXY, {x: 0, y: 8});
+            const y2 = checkOpenSquare(possitions, type, thisBrickXY, {x: 0, y: -8});
+            return x1.concat(x2, y1, y2);
+        };
+        case "wk": {
+            return [];
+        };
+        case "wb": {
+            const xy1 = checkOpenSquare(possitions, type, thisBrickXY, {x: 8, y: 8});
+            const xy2 = checkOpenSquare(possitions, type, thisBrickXY, {x: -8, y: -8});
+            const xy3 = checkOpenSquare(possitions, type, thisBrickXY, {x: 8, y: -8});
+            const xy4 = checkOpenSquare(possitions, type, thisBrickXY, {x: -8, y: 8});
+            return xy1.concat(xy2, xy3, xy4);
+        };
+        case "wQ": {
+            return [];
+        };
+        case "wK": {
+            return [];
+        };
+        case "wp": {
+            if([...possitions[brickIndex]][4] === "2"){
+                    return checkOpenSquare(possitions, type, thisBrickXY, {x: 0, y: 3});
                 }
                 else{
-                    return checkOpenSquare(possitions, type, thisBrickXY, {x: 0, y: -1});
+                    return checkOpenSquare(possitions, type, thisBrickXY, {x: 0, y: 2});
                 }
-            } break;
-
-            // white
-            case "wr": break;
-            case "wk": break;
-            case "wb": break;
-            case "wQ": break;
-            case "wK": break;
-            case "wp": {
-                if([...possitions[brickIndex]][4] === "2"){
-                        return checkOpenSquare(possitions, type, thisBrickXY, {x: 0, y: 3});
-                    }
-                    else{
-                        return checkOpenSquare(possitions, type, thisBrickXY, {x: 0, y: 2});
-                    }
-            } break;
+        };
     }
 }
 
 /**
- * ALLWAYS add one extra possible route than legal.
+ * ALLWAYS add one extra possible route than legal if possible route is positive.
  * @param {string[]} possitions 
  * @param {string} type
  * @param {number[]} thisBrickXY 
@@ -52,51 +85,57 @@ const checkOpenSquare = (possitions, type, thisBrickXY, pb) => {
     let xs = [];
     let ys = [];
     const ps = possitions.map(e => e.split(",").join(""));
+    const tsq = ps.map(e => e.match(/\d+/gm).join(""));
     const legalMoves = [];
+    var x,y;
 
     if(pb.x >= 0){
-        for(let x = 0; x < pb.x; x++){
+        for(x = 0; x < pb.x; x++){
             const xPos = String(thisBrickXY[0] + x);
             const yPos = String(thisBrickXY[1]);
-            if(!ps.includes(type + xPos + yPos)){
+            if(!tsq.includes(xPos + yPos)){
                 xs.push(+xPos);
             }
+            // if(tsq.includes(xPos + yPos)) break;
         }
     }
     else{
-        for(let x = pb.x; x < 0; x++){
+        for(x = pb.x; x < 0; x++){
             const xPos = String(thisBrickXY[0] + x);
             const yPos = String(thisBrickXY[1]);
-            if(!ps.includes(type + xPos + yPos)){
+            if(!tsq.includes(xPos + yPos)){
                 xs.push(+xPos);
             }
+            // if(tsq.includes(xPos + yPos)) break;
         }
     }
 
     if(pb.y >= 0){
-        for(let y = 0; y < pb.y; y++){
+        for(y = 0; y < pb.y; y++){
             const xPos = String(thisBrickXY[0]);
             const yPos = String(thisBrickXY[1] + y);
-            if(!ps.includes(type + xPos + yPos)){
+            if(!tsq.includes(xPos + yPos)){
                 ys.push(+yPos);
             }
+            // if(tsq.includes(xPos + yPos)) break;
         }
     }
     else{
-        for(let y = pb.y; y < 0; y++){
+        for(y = pb.y; y < 0; y++){
             const xPos = String(thisBrickXY[0]);
             const yPos = String(thisBrickXY[1] + y);
-            if(!ps.includes(type + xPos + yPos)){
+            if(!tsq.includes(xPos + yPos)){
                 ys.push(+yPos);
             }
+            // if(tsq.includes(xPos + yPos)) break;
         }
     }
 
-    var l = xs.length || ys.length;
+    const l = xs.length || ys.length;
     for(let i = 0; i < l; i++){
         const x = xs[i] || thisBrickXY[0];
         const y = ys[i] || thisBrickXY[1];
         legalMoves.push({x,y});
     }
-    return legalMoves;;
+    return legalMoves;
 }

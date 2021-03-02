@@ -97,6 +97,8 @@ body{
     position: absolute;
     width: 600px;
     height: 600px;
+    max-width: 600px;
+    max-height: 600px;
     right: 40px;
     bottom: 40px;
     border: solid 1px black;
@@ -120,10 +122,24 @@ body{
 }
 .white{
     background-color: rgb(233, 228, 197);
+    max-width: 75px;
+    max-height: 75px;
+    min-width: 75px;
+    min-height: 75px;
 }
 .black{
     background-color: rgb(89, 39, 39);
+    max-height: 75px;
+    max-width: 75px;
+    min-height: 75px;
+    min-width: 75px;
 }
+/* .white::before{
+    background-color: rgb(233, 228, 197);
+}
+.black::before{
+    background-color: rgb(89, 39, 39);
+} */
 
 .brick{
     position: absolute;
@@ -135,6 +151,19 @@ body{
     background-position-y: 0px;
     background-image: url('../bricks/bricks.svg');
     cursor: pointer;
+}
+
+.legalBrickIndicator{
+    position: relative;
+    left: calc(50% - 15px);
+    top: calc(50% - 15px);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: rgba(255, 190, 51, 0.598);
+    padding: 0px;
+    margin: 0px;
+    display: inline-block;
 }
 
 .player2{
