@@ -5,19 +5,19 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Select gametype</title>
-    <style>
-        .gameList{
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-        }
-    </style>
+    <link rel="stylesheet" href="/index/index.css">
 </head>
 <body>
+    <div class="header">
+        <h1>Welcome to chess!</h1>
+    </div>
     <div class="gameList">
         {{#each gameTypes}}
-            <a href="/{{text}}">{{text}}: {{info}} </a> 
+            <a href="/{{ text }}">
+                <img src="/index/images/{{ text }}.webp">
+                <h2>{{ text }}</h2> <p>{{ info }}</p>
+            </a> 
         {{/each}}
     </div>
-    
 </body>
 </html>

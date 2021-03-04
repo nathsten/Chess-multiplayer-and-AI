@@ -14,10 +14,13 @@ const chess = new Vue({
         newBrick: String(),
         brickColor: String(),
         brickIndex: Number(),
+        leagalBricks: [],
         gamePin: String(),
         playerName: String(),
         opponentName: String(),
-        chats: []
+        chats: [],
+        myKillList: [],
+        opponentKillList: []
     },
     methods: {
         checkActiveGame: () => {
@@ -108,52 +111,57 @@ const chess = new Vue({
             const [ playernameCreate, gamePinInput, playernameJoin ] = $("playernameCreate,gamePinInput,playernameJoin");
             const gamePin = String(gamePinInput.value);
             const playerName = String(playernameJoin.value);
-            fetch('/joinGame', {
-                method: "POST",
-                credentials: "include",
-                body: JSON.stringify({gamePin, playerName}),
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.msg){
-                    alert(data.msg);
-                }
-                else{
-                    chess.gameStarted = true;
-                    chess.isPlayer2 = true;
-                    chess.brickColor = "black";
-                    chess.playerName = data.playerName;
-                    chess.opponentName = data.player1;
-                    chess.gamePin = data.gamePin;
-                    startPossition = data.board;
-                    setTimeout(() => {
-                        const [ board ] = $("board");
-                        const [ chessBoard, brickBoard, gamePinDiv, opponentInfo, statsDiv ] = $("chessBoard,brickBoard,gamePin,opponentInfo,stats");
-                        const [ topX, bottomX, topY, bottomY ] = $("topX,bottomX,topY,bottomY");
-                        gamePinDiv.innerHTML = `Gamepin: ${data.gamePin}`;
-                        printBoard(chessBoard, { topX, topY, bottomX, bottomY });
-                        placeBricks(chessBoard, startPossition, { topX, topY, bottomX, bottomY });
-                        board.classList.add("player2");
-                        const bricks = document.querySelectorAll(".brick");
-                        bricks.forEach(e => e.classList.add("player2Brick"));
-                        const markers = document.querySelectorAll(".marker");
-                        markers.forEach(e => e.classList.add("player2Brick"));
-                        statsDiv.classList.add("player2Brick");
-                        socket.emit('player2Joined', {playerName, gamePin: chess.gamePin});
-                        chessBoard.addEventListener("click", brickSelect);
-                    }, 10);
-                }
-            })
-            .then(() => {
-                const data = {
-                    gamePin: chess.gamePin,
-                    playerName: chess.playerName
-                }
-                socket.emit('joinGame', data);
-            })
+            if(gamePin !== "" && playerName !== ""){
+                fetch('/joinGame', {
+                    method: "POST",
+                    credentials: "include",
+                    body: JSON.stringify({gamePin, playerName}),
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.msg){
+                        alert(data.msg);
+                    }
+                    else{
+                        chess.gameStarted = true;
+                        chess.isPlayer2 = true;
+                        chess.brickColor = "black";
+                        chess.playerName = data.playerName;
+                        chess.opponentName = data.player1;
+                        chess.gamePin = data.gamePin;
+                        startPossition = data.board;
+                        setTimeout(() => {
+                            const [ board ] = $("board");
+                            const [ chessBoard, brickBoard, gamePinDiv, opponentInfo, statsDiv ] = $("chessBoard,brickBoard,gamePin,opponentInfo,stats");
+                            const [ topX, bottomX, topY, bottomY ] = $("topX,bottomX,topY,bottomY");
+                            gamePinDiv.innerHTML = `Gamepin: ${data.gamePin}`;
+                            printBoard(chessBoard, { topX, topY, bottomX, bottomY });
+                            placeBricks(chessBoard, startPossition, { topX, topY, bottomX, bottomY });
+                            board.classList.add("player2");
+                            const bricks = document.querySelectorAll(".brick");
+                            bricks.forEach(e => e.classList.add("player2Brick"));
+                            const markers = document.querySelectorAll(".marker");
+                            markers.forEach(e => e.classList.add("player2Brick"));
+                            statsDiv.classList.add("player2Brick");
+                            socket.emit('player2Joined', {playerName, gamePin: chess.gamePin});
+                            chessBoard.addEventListener("click", brickSelect);
+                        }, 10);
+                    }
+                })
+                .then(() => {
+                    const data = {
+                        gamePin: chess.gamePin,
+                        playerName: chess.playerName
+                    }
+                    socket.emit('joinGame', data);
+                })
+            }
+            else {
+                alert("Please fill in gamepin and playername!");
+            }
         },
         leaveGame: () => {
             const data = {

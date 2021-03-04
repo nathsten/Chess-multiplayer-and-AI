@@ -22,7 +22,6 @@ const server = http.createServer(app);
 const io = socketio(server);
 server.listen(port, e => e ? console.log(e) : console.log(`listening on port:${port}`))
 
-app.use(express.static('../public'));
 app.use('/', express.static('../public'));
 app.use('/multiplayer', express.static('../public/multiplayer'));
 app.use('/local', express.static('../public/local'));

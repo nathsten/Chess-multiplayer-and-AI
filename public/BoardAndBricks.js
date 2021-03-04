@@ -127,13 +127,12 @@ const brickSelect = e => {
         chess.selectedBrick = id;
         chess.brickIndex = startPossition.split("/").map(e => e.split(",").join("")).indexOf(id);
         const brickType = id.split("").filter(e => !+e).join("");
-        const legalMoves = checkBrickMoves(startPossition, chess.brickIndex, brickType);;
+        const legalMoves = checkBrickMoves(startPossition, chess.brickIndex, brickType);
         const [ chessBoard ] = $("chessBoard");
         legalMoves.forEach(move => {
             chessBoard.childNodes.forEach(c => {
                 if(c.id === String(move.x) + String(move.y)){
                     c.classList.add("legalBrick");
-                    console.log(c.childNodes.length)
                     if(c.childNodes.length <= 0){
                         const d = new$("div");
                         d.className = "legalBrickIndicator";
@@ -146,25 +145,29 @@ const brickSelect = e => {
     }
     else if((e.target.className.includes("legalBrick") || e.target.className.includes("legalBrickIndicator")) && chess.brickSelected){
     // if(true){
-        const [ chessBoard, gamePinDiv, statsDiv ] = $("chessBoard,gamePin,stats");
         const { id } = e.target;
         chess.newBrick = id;
-        moveBrick(chess.brickIndex, chessBoard);
+        moveBrick(chess.brickIndex, true);
         chess.brickSelected = false;
         chess.selectedBrick = String();
         chess.brickIndex = Number();
+    }
+    else {
+        console.log(leagalBricks);
     }
 }
 
 /**
  * @param {number} brickIndex 
- * @param {HTMLDivElement} chessBoard 
+ * @param {boolean} online
  */
-const moveBrick = (brickIndex, chessBoard) => {
+const moveBrick = (brickIndex, online) => {
     var newStart = startPossition.split("/");
     newStart[brickIndex] = newStart[brickIndex].split(",")[0] + ',' + chess.newBrick;
     startPossition = newStart.join("/");
-    socket.emit('move', {gamePin: chess.gamePin, startPossition, color: chess.brickColor});
+    if(online){
+        socket.emit('move', {gamePin: chess.gamePin, startPossition, color: chess.brickColor});
+    }
     chess.isMyTurn = false;
 }
 
