@@ -127,7 +127,9 @@ const brickSelect = e => {
         chess.selectedBrick = id;
         chess.brickIndex = startPossition.split("/").map(e => e.split(",").join("")).indexOf(id);
         const brickType = id.split("").filter(e => !+e).join("");
-        const legalMoves = checkBrickMoves(startPossition, chess.brickIndex, brickType);
+        const checkMoves = checkBrickMoves(startPossition, chess.brickIndex, brickType);
+        const legalMoves = checkMoves.legalBricks;
+        const kill = checkMoves.kill;
         const [ chessBoard ] = $("chessBoard");
         legalMoves.forEach(move => {
             chessBoard.childNodes.forEach(c => {
@@ -142,6 +144,10 @@ const brickSelect = e => {
                 }
             })
         })
+        kill.forEach(brick => {
+            const { x, y } = brick;
+            chessBoard.childNodes.forEach(e => e.id.match(/(\d+)/gm).join("") === `${x}${y}` ? e.classList.add("canKill") : null);
+        })
     }
     else if((e.target.className.includes("legalBrick") || e.target.className.includes("legalBrickIndicator")) && chess.brickSelected){
     // if(true){
@@ -152,8 +158,14 @@ const brickSelect = e => {
         chess.selectedBrick = String();
         chess.brickIndex = Number();
     }
-    else {
-        console.log(leagalBricks);
+    else if(e.target.className.includes("canKill") && chess.brickSelected){
+        const { id } = e.target;
+        const newBrickIndex = +id.match(/(\d+)/gm);
+        chess.newBrick = newBrickIndex;
+        const brickIndex = startPossition.split("/").map(e => e.split(",").join("")).indexOf(id);
+        killBrick(brickIndex, chess.myKillList);
+        const brickToMove = chess.brickColor === "white" ? chess.brickIndex-1 : chess.brickIndex;
+        moveBrick(brickToMove, true);
     }
 }
 
@@ -165,10 +177,31 @@ const moveBrick = (brickIndex, online) => {
     var newStart = startPossition.split("/");
     newStart[brickIndex] = newStart[brickIndex].split(",")[0] + ',' + chess.newBrick;
     startPossition = newStart.join("/");
+    // send and recive killList from eachother for every move.
     if(online){
-        socket.emit('move', {gamePin: chess.gamePin, startPossition, color: chess.brickColor});
+        socket.emit('move', {gamePin: chess.gamePin, startPossition, color: chess.brickColor, myKillList: chess.myKillList});
     }
     chess.isMyTurn = false;
+}
+
+/** 
+ * @param {string[]} killList 
+ * @param {HTMLDivElement} listDiv 
+ */
+const updateKillList = (killList, listDiv) => {
+    listDiv.innerHTML = "";
+    killList.forEach(kill => {
+        if(kill !== ""){
+            const type = posByType(kill);
+            const boardPos = {x:1, y: 1};
+            const div = new$("div");
+            const brick = new Brick(type, boardPos, div);
+            brick.div.className = "killedBricks";
+            div.style.backgroundPositionX = `-${type.x * 40}px`;
+            div.style.backgroundPositionY = `-${type.y * 40}px`;
+            listDiv.append(brick.div);
+        }
+    })
 }
 
 /**

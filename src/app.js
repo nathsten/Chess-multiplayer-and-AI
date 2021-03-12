@@ -11,9 +11,9 @@ const cons = require('consolidate');
 const port = 5000 || process.env.PORT;
 
 const app = express();
+app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
-app.use(cookieParser());
 app.engine('hbs', engines.handlebars);
 app.set('indexPage', './views');
 app.set('view engine', 'hbs');
@@ -30,7 +30,6 @@ app.use('/AI', express.static('../public/AI'));
 client.connect();
 
 io.on('connection', socket => {
-    // console.log("on");
 
     socket.on('player2Joined', data => {
         const {player2Name, gamePin} = data;
@@ -49,13 +48,23 @@ io.on('connection', socket => {
     })
 
     socket.on('move', data => {
-        const { gamePin, startPossition, color } = data
-        io.to(gamePin).emit('newMove', {startPossition, color});
+        const { gamePin, startPossition, color, myKillList } = data
+        const player = color === "white" ? "p1kills" : "p2kills";
+        const killList = myKillList.join(",");
+        io.to(gamePin).emit('newMove', {startPossition, color, killList});
         client.query(`
             UPDATE games
             SET board = '${startPossition}'
             where game_pin = '${gamePin}';
-        `);
+        `)
+        // Kill list still have som few bugs on how its transfered. 
+        .then(() => {
+            client.query(`
+                UPDATE games
+                SET ${player} = '${killList}'
+                where game_pin = '${gamePin}';
+            `);
+        })
     })
 
     socket.on('chatMsg', data => {
@@ -63,9 +72,24 @@ io.on('connection', socket => {
         io.to(gamePin).emit('incommingChatMsg', {msg: chatMsg, sender})
     })
 
-    // socket.on('disconnect', data => {
+    socket.on('leaveGame', data => {
+        const { playerName, gamePin, role } = data;
+        io.to(gamePin).emit('playerLeft', {playerName});
+        if(role){
+            client.query(`
+                UPDATE games
+                SET player2 = ''
+                where game_pin = '${gamePin}';
+            `);
+        }
+        else{
+            client.query(`
+                DELETE FROM games
+                where game_pin = '${gamePin}';
+            `);
+        }
 
-    // })
+    })
 })
 
 const gameTypes = [
@@ -87,11 +111,13 @@ app.get('/checkActiveGame', async (req, res) => {
             where game_pin = '${gamePin}';
         `);
         const game = await checkGame.rows;
-        if(game){
+        if(game[0]){
             const { board } = game[0];
             const obj = {board, gamePin};
             obj.player1 = game[0].player1;
             obj.player2 = game[0].player2;
+            obj.p1Kills = game[0].p1kills;
+            obj.p2Kills = game[0].p2kills;
             if(role === "player2") {
                 obj.isPlayer2 = true;
                 obj.playerName = playername;
@@ -105,6 +131,7 @@ app.get('/checkActiveGame', async (req, res) => {
     }  
     catch(e){
         res.send({});
+        console.log(e);
     } 
 })
 
@@ -112,14 +139,18 @@ app.post('/createNewGame', (req, res) => {
     const { playername } = req.body;
     const gamePin = genGamePin();
     client.query(`
-        INSERT INTO games(game_pin, player1, player2, board)
-        values('${gamePin}', '${playername}', '', '${startPossition}');
+        INSERT INTO games(game_pin, player1, player2, board, p1kills, p2kills)
+        values('${gamePin}', '${playername}', '', '${startPossition}', '', '');
     `)
     .then(() => res.cookie('gamePin', gamePin, {path: "/"})
     .cookie('playername', playername, {path: '/'})
     .cookie('role', 'creator', {path: '/'})
     .cookie('brick', 'white', {path: '/'})
-    .send({gamePin, startPossition, playername, gamePin}));
+    .send({gamePin, startPossition, playername, gamePin}))
+    .catch(e => {
+        res.send({msg: `Failed to create new game: ${e}`});
+        console.log(e);
+    });
 })
 
 app.post('/joinGame', (req, res) => {
@@ -130,8 +161,8 @@ app.post('/joinGame', (req, res) => {
     `)
     .then(game => {
         if(game){
-            // if(game.player2 === ''){
-                const { player1, board } = game.rows[0];
+            if(!game.player2){
+                const { player1, board, p1kills, p2kills } = game.rows[0];
                 client.query(`
                     UPDATE games
                     SET player2 = '${playerName}'
@@ -142,9 +173,12 @@ app.post('/joinGame', (req, res) => {
                     .cookie('playername', playerName, {path: '/'})
                     .cookie('role', 'player2', {path: '/'})
                     .cookie('brick', 'black', {path: '/'})
-                    .send({player1, board, gamePin, playerName});
+                    .send({player1, board, gamePin, playerName, p1kills, p2kills});
                 })
-            // }
+            }
+            else{
+                res.send({msg: "There are already two players in this game"});
+            }
         }
         else{
             res.send({msg: "Game not found"})
@@ -156,9 +190,15 @@ app.post('/joinGame', (req, res) => {
 })
 
 app.post('/leaveGame', (req, res) => {
-    res.clearCookie('playername')
-    .clearCookie('role')
-    .clearCookie('brick')
-    .clearCookie('gamePin')
-    .send("game left");
+    try{
+        res.clearCookie('playername')
+        .clearCookie('role')
+        .clearCookie('brick')
+        .clearCookie('gamePin')
+        .send({status: "game left successfully"});
+    }
+    catch(e){
+        console.log(e);
+        res.send({status: "game left unsuccessfully"});
+    }
 })

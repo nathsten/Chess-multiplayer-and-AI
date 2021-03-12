@@ -51,17 +51,21 @@ const chess = new Vue({
                         socket.emit('player2Joined', existingGame.player2);
                         chess.playerName = existingGame.player2;
                         chess.opponentName = existingGame.player1;
+                        chess.myKillList = existingGame.p2Kills.split(",");
+                        chess.opponentKillList = existingGame.p1Kills.split(",");
                     }
                     else{
                         chess.brickColor = "white";
                         chess.playerName = existingGame.player1;
                         chess.opponentName = existingGame.player2;
                         chess.isMyTurn = true;
+                        chess.myKillList = existingGame.p1Kills.split(",");
+                        chess.opponentKillList = existingGame.p2Kills.split(",");
                     }
-                    if(!existingGame.player2){
-                        opponentInfo.innerHTML = "Waiting for opponent...";
-                    }
+                    const [ myBricksTaken, opponentBricksTaken ] = $("myBricksTaken,opponentBricksTaken");
                     chessBoard.addEventListener("click", brickSelect);
+                    updateKillList(chess.myKillList, myBricksTaken);
+                    updateKillList(chess.opponentKillList, opponentBricksTaken);
                     const data = {
                         gamePin: chess.gamePin,
                         playerName: chess.playerName
@@ -84,6 +88,11 @@ const chess = new Vue({
                     }
                 }).then(res => res.json())
                 .then(data => {
+                    if(data.msg) {
+                        alert(data.msg);
+                        chess.gameStarted = false;
+                        return;
+                    }
                     const [ chessBoard, brickBoard, gamePinDiv, opponentInfo ] = $("chessBoard,brickBoard,gamePin,opponentInfo");
                     const [ topX, bottomX, topY, bottomY ] = $("topX,bottomX,topY,bottomY");
                     gamePinDiv.innerHTML = `Gamepin: ${data.gamePin}`;
@@ -91,9 +100,10 @@ const chess = new Vue({
                     printBoard(chessBoard, { topX, topY, bottomX, bottomY });
                     placeBricks(chessBoard, startPossition, { topX, topY, bottomX, bottomY });
                     chessBoard.addEventListener("click", brickSelect);
-                    chess.playerName = data.playerName;
+                    chess.playerName = data.playername;
                     chess.gamePin = data.gamePin;
                     chess.isMyTurn = true;
+                    chess.brickColor = "white";
                 })
                 .then(() => {
                     const data = {
@@ -132,6 +142,8 @@ const chess = new Vue({
                         chess.playerName = data.playerName;
                         chess.opponentName = data.player1;
                         chess.gamePin = data.gamePin;
+                        chess.myKillList = data.p1kills.split(",");
+                        chess.opponentKillList = data.p2kills.split(",");
                         startPossition = data.board;
                         setTimeout(() => {
                             const [ board ] = $("board");
@@ -146,7 +158,7 @@ const chess = new Vue({
                             const markers = document.querySelectorAll(".marker");
                             markers.forEach(e => e.classList.add("player2Brick"));
                             statsDiv.classList.add("player2Brick");
-                            socket.emit('player2Joined', {playerName, gamePin: chess.gamePin});
+                            socket.emit('player2Joined', {player2Name: playerName, gamePin: chess.gamePin});
                             chessBoard.addEventListener("click", brickSelect);
                         }, 10);
                     }
@@ -177,7 +189,7 @@ const chess = new Vue({
                 }
             })
             .then(() => {
-                // socket.emit('disconnect', chess.player2Name);
+                socket.emit('leaveGame', ({playerName: chess.playerName, gamePin: chess.gamePin, role: chess.isPlayer2}));
             })
             .then(() => location.reload());
         },
@@ -194,11 +206,16 @@ chess.checkActiveGame();
 
 socket.on('player2', player2Name => {
     if(!chess.isPlayer2){
-        opponentInfo.innerHTML = `Playing against: ${player2Name.playerName}`;
-        chess.opponentName = player2Name.playerName;
+        chess.opponentName = player2Name;
     }
+});
+
+socket.on('playerLeft', playerName => {
+    chess.opponentName = '';
+    chess.chats.push({sender: "Bot", text: `${playerName.playerName} left the game`});
 })
 
+// send and recive killList from each other for every move.
 socket.on('newMove', data => {
     const [ chessBoard, topX, bottomX, topY, bottomY ] = $("chessBoard,topX,bottomX,topY,bottomY");
     placeBricks(chessBoard, data.startPossition, { topX, topY, bottomX, bottomY });
@@ -209,7 +226,18 @@ socket.on('newMove', data => {
         document.querySelectorAll(".brick, .marker")
         .forEach(e => e.classList.add("player2Brick"));
     }
-    if(data.color !== chess.brickColor) chess.isMyTurn = true;
+    if(data.color !== chess.brickColor) {
+        chess.isMyTurn = true;
+        chess.opponentKillList = data.killList.split(",");
+    }
+    else {
+        chess.myKillList = data.killList.split(",");
+    }
+    console.log(data.killList);
+
+    const [ myBricksTaken, opponentBricksTaken ] = $("myBricksTaken,opponentBricksTaken");
+    updateKillList(chess.myKillList, myBricksTaken);
+    updateKillList(chess.opponentKillList, opponentBricksTaken);
 })
 
 socket.on('incommingChatMsg', data => {
