@@ -122,6 +122,10 @@ const placeBricks = (chessBoard, possitions, { topX, topY, bottomX, bottomY }) =
  */
 const brickSelect = e => {
     if(e.target.className.includes("brick") && e.target.id.startsWith(chess.brickColor[0]) && chess.isMyTurn){
+        if(chess.brickSelected){
+            const [ chessBoard, topX, bottomX, topY, bottomY ] = $("chessBoard,topX,bottomX,topY,bottomY");
+            placeBricks(chessBoard, startPossition, {topX, topY, bottomX, bottomY});
+        }
         const { id } = e.target;
         chess.brickSelected = true;
         chess.selectedBrick = id;
@@ -179,9 +183,17 @@ const moveBrick = (brickIndex, online) => {
     startPossition = newStart.join("/");
     // send and recive killList from eachother for every move.
     if(online){
-        socket.emit('move', {gamePin: chess.gamePin, startPossition, color: chess.brickColor, myKillList: chess.myKillList});
+        socket.emit('move', {
+            gamePin: chess.gamePin, 
+            startPossition, 
+            color: chess.brickColor, 
+            myKillList: chess.myKillList.join(",")});
     }
     chess.isMyTurn = false;
+    const myBricks = startPossition.split("/").map(e => e.split(",").join("")).filter(e => e.startsWith(chess.brickColor[0]));
+    const [ chessBoard ] = $("chessBoard");
+    const kingInCheck = checkKing(startPossition, myBricks, chessBoard);
+    console.log(kingInCheck);
 }
 
 /** 

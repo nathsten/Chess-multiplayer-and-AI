@@ -36,7 +36,7 @@ const checkBrickMoves = (startPossition, brickIndex, type) => {
             const y2 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: 0, y: -8});
             const xy = checkOpenSquareDiagonal(possitions, type, thisBrickXY, 8);
             const legalBricks = x1.concat(x2, y1, y2, xy);
-            const kill = [];
+            const kill = checkIfBrickCanKill(chess.brickColor, startPossition, legalBricks);
             return {legalBricks, kill};
         };
         case "bK": {
@@ -46,7 +46,7 @@ const checkBrickMoves = (startPossition, brickIndex, type) => {
             const y2 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: 0, y: -1});
             const xy = checkOpenSquareDiagonal(possitions, type, thisBrickXY, 2);
             const legalBricks = x1.concat(x2, y1, y2, xy);
-            const kill = [];
+            const kill = checkIfBrickCanKill(chess.brickColor, startPossition, legalBricks);
             return {legalBricks, kill};
         };
         case "bp": {
@@ -89,7 +89,7 @@ const checkBrickMoves = (startPossition, brickIndex, type) => {
             const y2 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: 0, y: -8});
             const xy = checkOpenSquareDiagonal(possitions, type, thisBrickXY, 8);
             const legalBricks = x1.concat(x2, y1, y2, xy);
-            const kill = [];
+            const kill = checkIfBrickCanKill(chess.brickColor, startPossition, legalBricks);
             return {legalBricks, kill};
         };
         case "wK": {
@@ -99,7 +99,7 @@ const checkBrickMoves = (startPossition, brickIndex, type) => {
             const y2 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: 0, y: -1});
             const xy = checkOpenSquareDiagonal(possitions, type, thisBrickXY, 2);
             const legalBricks = x1.concat(x2, y1, y2, xy);
-            const kill = [];
+            const kill = checkIfBrickCanKill(chess.brickColor, startPossition, legalBricks);
             return {legalBricks, kill};
         };
         case "wp": {
@@ -325,12 +325,45 @@ const checkIfPawnCanKill = (brickColor, startPossition, thisBrickXY, possibleMov
 }
 
 /**
+ * @param {string} startPossition 
+ * @param {string[]} allBricks a list of all the bricks with turn color
+ * @param {HTMLElement} chessBoard 
+ * @returns {boolean} if some brick can kill the king
+ */
+const checkKing = (startPossition, allBricks, chessBoard) => {
+    const color = allBricks[0][0];
+    const cc = color === "w" ? "b" : "w";
+    const allKills = [];
+    allBricks.forEach(brick => {
+        const brickXY = brick.split("").filter(e => +e).map(e => +e);
+        const type = brick.match(/[a-zA-Z]/gm).join("");
+        const brickIndex = startPossition.split("/").indexOf(type + "," + brickXY.join(""));
+        const killBricks = checkBrickMoves(startPossition, brickIndex, type).kill;
+        allKills.push(killBricks);
+    })
+
+    // fix this!!
+    allKills.forEach(kill => {
+        const { x, y } = kill;
+        chessBoard.childNodes.forEach(c => {
+            // @ts-ignore
+            const id = c.id;
+            if(id === (cc + "K" + String(x) + String(y))){
+                return true;
+            }
+        })
+    })
+    
+    return false;
+}
+
+/**
  * @param {number} brickIndex 
  * @param {string[]} myKillList 
  */
 const killBrick = (brickIndex, myKillList) => {
     var newPossitions = startPossition.split("/");
-    myKillList.push(newPossitions[brickIndex].match(/[a-z]+/gm).join(""));
+    myKillList.push(newPossitions[brickIndex].match(/[a-z A-Z]+/gm).join(""));
     newPossitions.splice(brickIndex, 1);
     startPossition = newPossitions.join("/");
 }
