@@ -1,0 +1,7 @@
+{
+    "gameTypes": [
+        { "info": "Play against an A", "text": "AI" },
+        { "info": "Play locally on your computer", "text": "Local" },
+        { "text": "Multiplayer", "info": "Play online multiplayer" }
+    ]
+}

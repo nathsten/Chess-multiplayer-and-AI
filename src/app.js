@@ -5,6 +5,7 @@ const socketio = require('socket.io');
 const http = require('http');
 const tf = require('@tensorflow/tfjs');
 const engines = require('consolidate');
+const { readFileSync } = require('fs');
 const { genGamePin, startPossition } = require('./appModules');
 const { client } = require('./client');
 const cons = require('consolidate');
@@ -50,8 +51,7 @@ io.on('connection', socket => {
     socket.on('move', data => {
         const { gamePin, startPossition, color, myKillList } = data
         const player = color === "white" ? "p1kills" : "p2kills";
-        const killList = myKillList.join(",");
-        io.to(gamePin).emit('newMove', {startPossition, color, killList});
+        io.to(gamePin).emit('newMove', {startPossition, color, killList: myKillList});
         client.query(`
             UPDATE games
             SET board = '${startPossition}'
@@ -61,7 +61,7 @@ io.on('connection', socket => {
         .then(() => {
             client.query(`
                 UPDATE games
-                SET ${player} = '${killList}'
+                SET ${player} = '${myKillList}'
                 where game_pin = '${gamePin}';
             `);
         })
@@ -92,11 +92,7 @@ io.on('connection', socket => {
     })
 })
 
-const gameTypes = [
-    { info: 'Play against an AI', text: 'AI' },
-    { info: 'Play locally on your computer', text: 'Local' },
-    { text: 'Multiplayer', info: 'Play online multiplayer' }
-]
+const gameTypes = JSON.parse(readFileSync('gameTypes.json')).gameTypes;
 
 app.get('/', (req, res) => {
     res.render('index', {gameTypes})
@@ -202,3 +198,5 @@ app.post('/leaveGame', (req, res) => {
         res.send({status: "game left unsuccessfully"});
     }
 })
+
+// console.log(startPossition.match(/\D+/gm).map((e, i) => i >= 1 ? e.slice(1, e.length-1) : e.slice(0, e.length-1)))

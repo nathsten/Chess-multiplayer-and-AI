@@ -233,7 +233,6 @@ socket.on('newMove', data => {
     else {
         chess.myKillList = data.killList.split(",");
     }
-    console.log(data.killList);
 
     const [ myBricksTaken, opponentBricksTaken ] = $("myBricksTaken,opponentBricksTaken");
     updateKillList(chess.myKillList, myBricksTaken);
