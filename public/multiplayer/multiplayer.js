@@ -10,9 +10,12 @@ const chess = new Vue({
         isPlayer2: false,
         brickSelected: false,
         isMyTurn: false,
+        // type and index of selected brick
         selectedBrick: String(),
+        // Index of new brick
         newBrick: String(),
         brickColor: String(),
+        // Index of brick in startPossistion
         brickIndex: Number(),
         leagalBricks: [],
         gamePin: String(),
@@ -160,6 +163,9 @@ const chess = new Vue({
                             statsDiv.classList.add("player2Brick");
                             socket.emit('player2Joined', {player2Name: playerName, gamePin: chess.gamePin});
                             chessBoard.addEventListener("click", brickSelect);
+                            const [ myBricksTaken, opponentBricksTaken ] = $("myBricksTaken,opponentBricksTaken");
+                            updateKillList(chess.myKillList, myBricksTaken);
+                            updateKillList(chess.opponentKillList, opponentBricksTaken);
                         }, 10);
                     }
                 })

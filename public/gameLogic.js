@@ -258,6 +258,7 @@ const checkOpenSquareDiagonal = (possitions, type, thisBrickXY, pb) => {
 * @returns {{x: number, y: number}[]}
 */
 const checkOpenSquareKnight = (possitions, thisBrickXY) => {
+    // All the possible moves a Knight can make
     const possibleMoves = [
         {x: 2, y: 1}, {x: 1, y: 2}, 
         {x: -2, y: 1}, {x: -1, y: 2},
@@ -327,34 +328,52 @@ const checkIfPawnCanKill = (brickColor, startPossition, thisBrickXY, possibleMov
 /**
  * @param {string} startPossition 
  * @param {string[]} allBricks a list of all the bricks with turn color
- * @param {HTMLElement} chessBoard 
- * @returns {boolean} if some brick can kill the king
+ * @returns {{inCheck: boolean, allKills: {x: number, y:number}[][], allMoves: {x: number, y:number}[][]}} if some bricks can kill the king
  */
-const checkKing = (startPossition, allBricks, chessBoard) => {
+const checkKing = (startPossition, allBricks) => {
     const color = allBricks[0][0];
     const cc = color === "w" ? "b" : "w";
+    // List of all bricks that can be killed.
     const allKills = [];
+    // List of all moves that can be made
+    const allMoves = [];
+    var inCheck = false;
     allBricks.forEach(brick => {
         const brickXY = brick.split("").filter(e => +e).map(e => +e);
         const type = brick.match(/[a-zA-Z]/gm).join("");
         const brickIndex = startPossition.split("/").indexOf(type + "," + brickXY.join(""));
-        const killBricks = checkBrickMoves(startPossition, brickIndex, type).kill;
-        allKills.push(killBricks);
+
+        // Every brick's index that can be killed
+        const killBricks = checkBrickMoves(startPossition, brickIndex, type);
+        allKills.push(killBricks.kill);
+        allMoves.push(killBricks.legalBricks)
     })
 
-    // fix this!!
-    allKills.forEach(kill => {
-        const { x, y } = kill;
-        chessBoard.childNodes.forEach(c => {
-            // @ts-ignore
-            const id = c.id;
-            if(id === (cc + "K" + String(x) + String(y))){
-                return true;
-            }
+    const pXY = startPossition.split("/").filter(e => e[0] === cc && e[1] === "K").map(e => e.split(",")).map(([a,b]) => b.split("").map(e => +e))
+    allKills.forEach(killList => {
+        killList.forEach((/** @type {{ x: number; y: number; }} */ kill) => {
+            const { x, y } = kill;
+            // If kings index includes in the killLists
+            if(pXY[0][0] === x && pXY[0][1] === y) inCheck = true;
         })
     })
-    
-    return false;
+    return {inCheck, allKills, allMoves};
+}
+
+/**
+ * @param {{x: number, y:number}[]} kingMoves 
+ * @param {{x: number, y:number}[][]} allMoves 
+ * @returns {boolean}
+ */
+const checkIfKingCanMoveWhileInCheck = (kingMoves, allMoves) => {
+    var checkMate = false;
+    var kills = 0;
+    kingMoves.forEach(move => {
+        allMoves.forEach(moveList => moveList.forEach(kill => kill.x === move.x && kill.y === move.y ? kills++ : null))
+    })
+
+    if(kills === kingMoves.length) checkMate = true;
+    return checkMate
 }
 
 /**

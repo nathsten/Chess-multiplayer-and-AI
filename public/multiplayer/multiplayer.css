@@ -243,8 +243,7 @@ p{
     height: 60%;
     bottom: 20%;
     left: 5%;
-    /* border: solid 1px rgb(233, 228, 197); */
-    overflow: scroll;
+    overflow-y: scroll;
     border-radius: 10px;
     text-align: left;
 }

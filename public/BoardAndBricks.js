@@ -191,9 +191,22 @@ const moveBrick = (brickIndex, online) => {
     }
     chess.isMyTurn = false;
     const myBricks = startPossition.split("/").map(e => e.split(",").join("")).filter(e => e.startsWith(chess.brickColor[0]));
-    const [ chessBoard ] = $("chessBoard");
-    const kingInCheck = checkKing(startPossition, myBricks, chessBoard);
-    console.log(kingInCheck);
+    const kingInCheck = checkKing(startPossition, myBricks);
+
+    if(kingInCheck.inCheck){
+        if(online) socket.emit('chatMsg', {gamePin: chess.gamePin, sender: chess.playerName, chatMsg: "Check!"});
+
+        const oc = chess.brickColor[0];
+        const cc = (oc === "w" ? "b" : "w") + "K";
+        const kingIndex = startPossition.split("/").map(e => e.split(",")[0]).indexOf(cc);
+        
+        // Returns too many moves for some reason: fix this!!
+        const kingMoves = checkBrickMoves(startPossition, kingIndex, cc);
+        console.log(kingMoves.legalBricks);
+        const checkMate = checkIfKingCanMoveWhileInCheck(kingMoves.legalBricks, kingInCheck.allMoves);
+        console.log(checkMate);
+        if(checkMate) alert("Check-mate!");
+    }
 }
 
 /** 
