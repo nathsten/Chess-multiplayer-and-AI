@@ -24,6 +24,7 @@ const io = socketio(server);
 server.listen(port, e => e ? console.log(e) : console.log(`listening on port:${port}`))
 
 app.use('/', express.static('../public'));
+app.use('/', express.static('../demos'));
 app.use('/multiplayer', express.static('../public/multiplayer'));
 app.use('/local', express.static('../public/local'));
 app.use('/AI', express.static('../public/AI'));
@@ -69,7 +70,12 @@ io.on('connection', socket => {
 
     socket.on('chatMsg', data => {
         const {chatMsg, sender, gamePin } = data;
-        io.to(gamePin).emit('incommingChatMsg', {msg: chatMsg, sender})
+        io.to(gamePin).emit('incommingChatMsg', {msg: chatMsg, sender});
+    })
+
+    socket.on('checkMate', data => {
+        const {chatMsg, sender, gamePin } = data;
+        io.to(gamePin).emit('isCheckMate', {msg: chatMsg, sender});
     })
 
     socket.on('leaveGame', data => {
@@ -199,4 +205,8 @@ app.post('/leaveGame', (req, res) => {
     }
 })
 
+
+app.get('/newAIGame', (req, res) => {
+    res.json(startPossition);
+})
 // console.log(startPossition.match(/\D+/gm).map((e, i) => i >= 1 ? e.slice(1, e.length-1) : e.slice(0, e.length-1)))

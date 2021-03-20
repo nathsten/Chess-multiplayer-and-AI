@@ -9,6 +9,7 @@ const checkBrickMoves = (startPossition, brickIndex, type) => {
     const possitions = startPossition.split("/");
     const thisBrickXY = possitions[brickIndex].split("").filter(e => +e).map(e => +e)
 
+    // brick-color only makes a difference if its a pawn.
     switch(type){
         case "br": {
             const x1 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: 8, y: 0});
@@ -126,10 +127,14 @@ const checkBrickMoves = (startPossition, brickIndex, type) => {
  * @returns {{x: number, y: number}[]}
  */
 const checkOpenSquareHorizontalVertial = (possitions, type, thisBrickXY, pb) => {
+    // List of legal moves x- direction
     const xs = [];
+    // List of legal moves y- direction
     const ys = [];
     const ps = possitions.map(e => e.split(",").join(""));
+    // List of taken squares.
     const tsq = ps.map(e => [...e]).map(([a,b,c,d]) => [a,c,d].join(""));
+    // list of all the legal moves {x: int, y: int}
     const legalMoves = [];
     const mc = chess.brickColor.split("")[0].toLowerCase();
     const oc = mc === "w" ? "b" : "w";
@@ -204,6 +209,7 @@ const checkOpenSquareDiagonal = (possitions, type, thisBrickXY, pb) => {
     const ps = possitions.map(e => e.split(",").join(""));
     const tsq = ps.map(e => [...e]).map(([a,b,c,d]) => [a,c,d].join(""));
     const mc = chess.brickColor.split("")[0].toLowerCase();
+    // opponent color
     const oc = mc === "w" ? "b" : "w";
     const legalMoves = [];
     var xy1 = true;
@@ -291,7 +297,8 @@ const checkOpenSquareKnight = (possitions, thisBrickXY) => {
 const checkIfBrickCanKill = (birckColor, startPossition, openMoves) => {
     const sp = startPossition.split("/").map(e => e.split(",").join(""));
     const tsq = sp.map(e => [...e]).map(([a,b,c,d]) => [a,c,d].join(""));
-    const c = birckColor === "white" ? "b" : "w";
+    var c = birckColor === "white" ? "b" : "w";
+    if(chess.myBrickColor) c = "b";
     const bricksCanKill = [];
     openMoves.forEach(move => {
         const { x, y } = move;
@@ -360,7 +367,7 @@ const checkKing = (startPossition, allBricks) => {
     return {inCheck, allKills, allMoves};
 }
 
-/**
+/** Unused for now.
  * @param {{x: number, y:number}[]} kingMoves 
  * @param {{x: number, y:number}[][]} allMoves 
  * @returns {boolean}
@@ -374,6 +381,16 @@ const checkIfKingCanMoveWhileInCheck = (kingMoves, allMoves) => {
 
     if(kills === kingMoves.length) checkMate = true;
     return checkMate
+}
+
+/** Quick solution for check mate. 
+ * @param {string[]} killList 
+ * @param {string} color 
+ * @returns {boolean}
+ */
+const checkMate = (killList, color) => {
+    const king = (color === "w" ? "b" : "w") + "K";
+    return killList.includes(king);
 }
 
 /**

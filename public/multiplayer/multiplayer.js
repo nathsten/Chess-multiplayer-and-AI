@@ -10,6 +10,7 @@ const chess = new Vue({
         isPlayer2: false,
         brickSelected: false,
         isMyTurn: false,
+        isOnline = true,
         // type and index of selected brick
         selectedBrick: String(),
         // Index of new brick
@@ -250,4 +251,12 @@ socket.on('incommingChatMsg', data => {
     chess.chats.push({sender: sender, text: msg});
     const [chatBox] = $("chatBox")
     chatBox.scrollTop = chatBox.scrollHeight;
+})
+
+socket.on('isCheckMate', data => {
+    const { msg, sender } = data;
+    chess.chats.push({sender: sender, text: msg});
+    const [chatBox] = $("chatBox")
+    chatBox.scrollTop = chatBox.scrollHeight;
+    chess.isMyTurn = false;
 })

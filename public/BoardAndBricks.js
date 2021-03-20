@@ -121,7 +121,7 @@ const placeBricks = (chessBoard, possitions, { topX, topY, bottomX, bottomY }) =
  * @param {MouseEvent} e 
  */
 const brickSelect = e => {
-    if(e.target.className.includes("brick") && e.target.id.startsWith(chess.brickColor[0]) && chess.isMyTurn){
+    if(e.target.className.includes("brick") && (e.target.id.startsWith(chess.brickColor[0]) || e.target.id.startsWith(chess.myBrickColor[0])) && chess.isMyTurn){
         if(chess.brickSelected){
             const [ chessBoard, topX, bottomX, topY, bottomY ] = $("chessBoard,topX,bottomX,topY,bottomY");
             placeBricks(chessBoard, startPossition, {topX, topY, bottomX, bottomY});
@@ -157,7 +157,7 @@ const brickSelect = e => {
     // if(true){
         const { id } = e.target;
         chess.newBrick = id;
-        moveBrick(chess.brickIndex, true);
+        moveBrick(chess.brickIndex, chess.isOnline);
         chess.brickSelected = false;
         chess.selectedBrick = String();
         chess.brickIndex = Number();
@@ -169,7 +169,7 @@ const brickSelect = e => {
         const brickIndex = startPossition.split("/").map(e => e.split(",").join("")).indexOf(id);
         killBrick(brickIndex, chess.myKillList);
         const brickToMove = chess.brickColor === "white" ? chess.brickIndex-1 : chess.brickIndex;
-        moveBrick(brickToMove, true);
+        moveBrick(brickToMove, chess.isOnline);
     }
 }
 
@@ -181,6 +181,7 @@ const moveBrick = (brickIndex, online) => {
     var newStart = startPossition.split("/");
     newStart[brickIndex] = newStart[brickIndex].split(",")[0] + ',' + chess.newBrick;
     startPossition = newStart.join("/");
+    var wasMyTurn = chess.isMyTurn;
     // send and recive killList from eachother for every move.
     if(online){
         socket.emit('move', {
@@ -188,25 +189,37 @@ const moveBrick = (brickIndex, online) => {
             startPossition, 
             color: chess.brickColor, 
             myKillList: chess.myKillList.join(",")});
+    }else {
+        const [ chessBoard, topX, bottomX, topY, bottomY ] = $("chessBoard,topX,bottomX,topY,bottomY");
+        placeBricks(chessBoard, startPossition, { topX, topY, bottomX, bottomY });    
+        const [ myBricksTaken, opponentBricksTaken ] = $("myBricksTaken,opponentBricksTaken");
+        updateKillList(chess.myKillList, myBricksTaken);
+        updateKillList(chess.opponentKillList, opponentBricksTaken);
     }
     chess.isMyTurn = false;
+    const isCheckMate = checkMate(chess.myKillList, chess.brickColor[0]);
+    if(isCheckMate){
+        if(online) socket.emit('checkMate', {gamePin: chess.gamePin, sender: chess.playerName, chatMsg: "Check mate!"});
+        else alert("Check mate!");
+        return;
+    }
+    
     const myBricks = startPossition.split("/").map(e => e.split(",").join("")).filter(e => e.startsWith(chess.brickColor[0]));
     const kingInCheck = checkKing(startPossition, myBricks);
-
     if(kingInCheck.inCheck){
         if(online) socket.emit('chatMsg', {gamePin: chess.gamePin, sender: chess.playerName, chatMsg: "Check!"});
 
-        const oc = chess.brickColor[0];
-        const cc = (oc === "w" ? "b" : "w") + "K";
-        const kingIndex = startPossition.split("/").map(e => e.split(",")[0]).indexOf(cc);
+        // const oc = chess.brickColor[0];
+        // const cc = (oc === "w" ? "b" : "w") + "K";
+        // const kingIndex = startPossition.split("/").map(e => e.split(",")[0]).indexOf(cc);
         
-        // Returns too many moves for some reason: fix this!!
-        const kingMoves = checkBrickMoves(startPossition, kingIndex, cc);
-        console.log(kingMoves.legalBricks);
-        const checkMate = checkIfKingCanMoveWhileInCheck(kingMoves.legalBricks, kingInCheck.allMoves);
-        console.log(checkMate);
-        if(checkMate) alert("Check-mate!");
+        // const kingMoves = checkBrickMoves(startPossition, kingIndex, cc);
+        // console.log(kingMoves.legalBricks);
+        // const checkMate = checkIfKingCanMoveWhileInCheck(kingMoves.legalBricks, kingInCheck.allMoves);
+        // console.log(checkMate);
+        // if(checkMate) alert("Check-mate!");
     }
+    if(!online && chess.myBrickColor && wasMyTurn) pickRandomBrick(startPossition);
 }
 
 /** 

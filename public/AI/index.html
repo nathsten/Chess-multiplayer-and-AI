@@ -6,12 +6,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Play against an AI</title>
     <link rel="stylesheet" href="AI.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12"></script>
     <script src="../BoardAndBricks.js"></script>
     <script src="../gameLogic.js"></script>
+    <script src="randomPlayer.js"></script>
 </head>
 <body>
     
-    <div id="chessRoot"></div>
+    <div id="chessRoot" class="chessRootPlaying">
+        <div id="header">
+            <span id="hText">AI Chess Game</span>
+            <span id="gamePin"></span>
+        </div>
+
+        <div id="board">
+            <div id="stats" class="stats">
+                <div id="statsHeader">Stats:</div>
+                <h3>Game Info:</h3>
+                <div id="gameChatDiv">
+                    <h3>Messages</h3>
+                    <div id="chatBox">
+                        <div v-for="chat in chats" class="chatMsg">
+                            <div>from: {{ chat.sender }}</div>
+                            <div>{{ chat.text}}</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="gameInfo">
+                    <div id="myGameInfoDiv">
+                        <p>Me:</p>
+                        <div class="bricksTaken" id="myBricksTaken"></div>
+                    </div>
+                    <div id="opponentInfoDiv">
+                        <p>AI:</p>
+                        <div class="bricksTaken" id="opponentBricksTaken"></div>
+                    </div>
+                </div>
+                <button v-on:click="leaveGame" id="leaveGame" class="button">Leave game</button>
+            </div>
+
+            <div id="x-axis">
+                <div class="axis xAxis" id="topX" style="position: absolute; height: 38px; width: 600px; left: calc(50% - 301px);"></div>
+                <div class="axis xAxis" id="bottomX" style="position: absolute; bottom: 0px; height: 40px; width: 600px; left: calc(50% - 301px);"></div>
+            </div>
+            <div id="chessBoard"></div>
+            <div id="y-axis">
+                <div class="axis yAxis" id="topY" style="position: absolute; height: 600px; width: 40px; right: 0px; top: calc(50% - 301px);"></div>
+                <div class="axis yAxis" id="bottomY" style="position: absolute; top: calc(50% - 301px); height: 600px; width: 40px; left: 0px;"></div>
+            </div>
+        </div>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="AI.js"></script>
