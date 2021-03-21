@@ -30,6 +30,15 @@ class Brick {
     }
 }
 
+const brickScore = {
+    "r": 5,
+    "p": 1,
+    "k": 3,
+    "b": 3,
+    "Q": 9,
+    "K": 10
+}
+
 /**
  * @param {HTMLDivElement} div 
  * @param {{ topX: HTMLDivElement, 
@@ -121,7 +130,7 @@ const placeBricks = (chessBoard, possitions, { topX, topY, bottomX, bottomY }) =
  * @param {MouseEvent} e 
  */
 const brickSelect = e => {
-    if(e.target.className.includes("brick") && (e.target.id.startsWith(chess.brickColor[0]) || e.target.id.startsWith(chess.myBrickColor[0])) && chess.isMyTurn){
+    if(e.target.className.includes("brick") && (e.target.id.startsWith(chess.brickColor[0])) && chess.isMyTurn){
         if(chess.brickSelected){
             const [ chessBoard, topX, bottomX, topY, bottomY ] = $("chessBoard,topX,bottomX,topY,bottomY");
             placeBricks(chessBoard, startPossition, {topX, topY, bottomX, bottomY});
@@ -204,22 +213,19 @@ const moveBrick = (brickIndex, online) => {
         return;
     }
     
-    const myBricks = startPossition.split("/").map(e => e.split(",").join("")).filter(e => e.startsWith(chess.brickColor[0]));
+    var myBricks = startPossition.split("/").map(e => e.split(",").join("")).filter(e => e.startsWith(chess.brickColor[0]));
+    if(chess.isAITurn) myBricks = startPossition.split("/").map(e => e.split(",").join("")).filter(e => e.startsWith("b"));
     const kingInCheck = checkKing(startPossition, myBricks);
     if(kingInCheck.inCheck){
-        if(online) socket.emit('chatMsg', {gamePin: chess.gamePin, sender: chess.playerName, chatMsg: "Check!"});
+        if(online){
+            socket.emit('chatMsg', {gamePin: chess.gamePin, sender: chess.playerName, chatMsg: "Check!"});
+        }
+        else {
+            chess.chats.push({sender: chess.isAITurn ? "AI": "Me", text: "Check!"});
+        }    
 
-        // const oc = chess.brickColor[0];
-        // const cc = (oc === "w" ? "b" : "w") + "K";
-        // const kingIndex = startPossition.split("/").map(e => e.split(",")[0]).indexOf(cc);
-        
-        // const kingMoves = checkBrickMoves(startPossition, kingIndex, cc);
-        // console.log(kingMoves.legalBricks);
-        // const checkMate = checkIfKingCanMoveWhileInCheck(kingMoves.legalBricks, kingInCheck.allMoves);
-        // console.log(checkMate);
-        // if(checkMate) alert("Check-mate!");
     }
-    if(!online && chess.myBrickColor && wasMyTurn) pickRandomBrick(startPossition);
+    if(!online && wasMyTurn) { chess.isAITurn = true; algorithmicPlayer(startPossition); };
 }
 
 /** 

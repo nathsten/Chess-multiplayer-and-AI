@@ -9,8 +9,8 @@ const chess = new Vue({
         isAITurn: false,
         selectedBrick: String(),
         newBrick: String(),
-        brickColor: "black",
-        myBrickColor: "white",
+        brickColor: "white",
+        AIColor: "black",
         isOnline: false,
         brickIndex: Number(),
         leagalBricks: [],
@@ -32,7 +32,8 @@ const chess = new Vue({
             chessBoard.addEventListener("click", brickSelect);
             updateKillList(chess.myKillList, myBricksTaken);
             updateKillList(chess.opponentKillList, opponentBricksTaken);
-        }
+        },
+        restartGame: () => location.reload()
     }
 });
 

@@ -42,9 +42,9 @@ const checkBrickMoves = (startPossition, brickIndex, type) => {
         };
         case "bK": {
             const x1 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: 2, y: 0});
-            const x2 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: -1, y: 0});
+            const x2 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: -2, y: 0});
             const y1 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: 0, y: 2});
-            const y2 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: 0, y: -1});
+            const y2 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: 0, y: -2});
             const xy = checkOpenSquareDiagonal(possitions, type, thisBrickXY, 2);
             const legalBricks = x1.concat(x2, y1, y2, xy);
             const kill = checkIfBrickCanKill(chess.brickColor, startPossition, legalBricks);
@@ -95,9 +95,9 @@ const checkBrickMoves = (startPossition, brickIndex, type) => {
         };
         case "wK": {
             const x1 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: 2, y: 0});
-            const x2 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: -1, y: 0});
+            const x2 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: -2, y: 0});
             const y1 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: 0, y: 2});
-            const y2 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: 0, y: -1});
+            const y2 = checkOpenSquareHorizontalVertial(possitions, type, thisBrickXY, {x: 0, y: -2});
             const xy = checkOpenSquareDiagonal(possitions, type, thisBrickXY, 2);
             const legalBricks = x1.concat(x2, y1, y2, xy);
             const kill = checkIfBrickCanKill(chess.brickColor, startPossition, legalBricks);
@@ -136,8 +136,9 @@ const checkOpenSquareHorizontalVertial = (possitions, type, thisBrickXY, pb) => 
     const tsq = ps.map(e => [...e]).map(([a,b,c,d]) => [a,c,d].join(""));
     // list of all the legal moves {x: int, y: int}
     const legalMoves = [];
-    const mc = chess.brickColor.split("")[0].toLowerCase();
-    const oc = mc === "w" ? "b" : "w";
+    var mc = chess.brickColor.split("")[0].toLowerCase();
+    var oc = mc === "w" ? "b" : "w";
+    if(chess.isAITurn) { oc = "w"; mc = "b" };
     var x,y;
 
     var xsActive = true;
@@ -208,9 +209,10 @@ const checkOpenSquareHorizontalVertial = (possitions, type, thisBrickXY, pb) => 
 const checkOpenSquareDiagonal = (possitions, type, thisBrickXY, pb) => {
     const ps = possitions.map(e => e.split(",").join(""));
     const tsq = ps.map(e => [...e]).map(([a,b,c,d]) => [a,c,d].join(""));
-    const mc = chess.brickColor.split("")[0].toLowerCase();
+    var mc = chess.brickColor.split("")[0].toLowerCase();
     // opponent color
-    const oc = mc === "w" ? "b" : "w";
+    var oc = mc === "w" ? "b" : "w";
+    if(chess.isAITurn) { oc = "w"; mc = "b" };
     const legalMoves = [];
     var xy1 = true;
     var xy2 = true;
@@ -274,8 +276,9 @@ const checkOpenSquareKnight = (possitions, thisBrickXY) => {
 
     const ps = possitions.map(e => e.split(",").join(""));
     const tsq = ps.map(e => [...e]).map(([a,b,c,d]) => [a,c,d].join(""));
-    const mc = chess.brickColor.split("")[0].toLowerCase();
-    const oc = mc === "w" ? "b" : "w";
+    var mc = chess.brickColor.split("")[0].toLowerCase();
+    var oc = mc === "w" ? "b" : "w";
+    if(chess.isAITurn) { oc = "w"; mc = "b" };
     const legalMoves = [];
 
     possibleMoves.forEach(move => {
@@ -298,7 +301,7 @@ const checkIfBrickCanKill = (birckColor, startPossition, openMoves) => {
     const sp = startPossition.split("/").map(e => e.split(",").join(""));
     const tsq = sp.map(e => [...e]).map(([a,b,c,d]) => [a,c,d].join(""));
     var c = birckColor === "white" ? "b" : "w";
-    if(chess.myBrickColor) c = "b";
+    if(chess.isAITurn) c = "w";
     const bricksCanKill = [];
     openMoves.forEach(move => {
         const { x, y } = move;
@@ -319,7 +322,8 @@ const checkIfBrickCanKill = (birckColor, startPossition, openMoves) => {
 const checkIfPawnCanKill = (brickColor, startPossition, thisBrickXY, possibleMoves) => {
     const sp = startPossition.split("/").map(e => e.split(",").join(""));
     const tsq = sp.map(e => [...e]).map(([a,b,c,d]) => [a,c,d].join(""));
-    const oc = brickColor === "white" ? "b" : "w";
+    var oc = brickColor === "white" ? "b" : "w";
+    if(chess.isAITurn) oc = "w"; 
     const bricksCanKill = [];
 
     possibleMoves.forEach(move => {
@@ -339,7 +343,8 @@ const checkIfPawnCanKill = (brickColor, startPossition, thisBrickXY, possibleMov
  */
 const checkKing = (startPossition, allBricks) => {
     const color = allBricks[0][0];
-    const cc = color === "w" ? "b" : "w";
+    var cc = color === "w" ? "b" : "w";
+    if(chess.isAITurn) cc = "w"; 
     // List of all bricks that can be killed.
     const allKills = [];
     // List of all moves that can be made

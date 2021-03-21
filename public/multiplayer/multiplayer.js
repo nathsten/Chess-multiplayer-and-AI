@@ -10,7 +10,7 @@ const chess = new Vue({
         isPlayer2: false,
         brickSelected: false,
         isMyTurn: false,
-        isOnline = true,
+        isOnline: true,
         // type and index of selected brick
         selectedBrick: String(),
         // Index of new brick

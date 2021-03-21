@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12"></script>
     <script src="../BoardAndBricks.js"></script>
     <script src="../gameLogic.js"></script>
-    <script src="randomPlayer.js"></script>
+    <script src="algorithmicPlayer.js"></script>
 </head>
 <body>
     
@@ -42,7 +42,7 @@
                         <div class="bricksTaken" id="opponentBricksTaken"></div>
                     </div>
                 </div>
-                <button v-on:click="leaveGame" id="leaveGame" class="button">Leave game</button>
+                <button v-on:click="restartGame" id="leaveGame" class="button">Restart game</button>
             </div>
 
             <div id="x-axis">
