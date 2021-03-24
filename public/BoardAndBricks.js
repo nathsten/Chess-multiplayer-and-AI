@@ -222,6 +222,7 @@ const moveBrick = (brickIndex, online) => {
         }
         else {
             chess.chats.push({sender: chess.isAITurn ? "AI": "Me", text: "Check!"});
+            AIKingInCheck = true;
         }    
 
     }

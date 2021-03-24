@@ -4,10 +4,12 @@
  */
 const rnd = l => Math.floor(Math.random() * l);
 
+// midlertidlig. 
+var AIKingInCheck = false;
 /**
  * @param {string} possitions 
  */
-const algorithmicPlayer = (possitions) => {
+const algorithmicPlayer = possitions => {
     // List of all bricks [][]
     const allBricks = possitions.split("/").map(e => e.split(","));
     const tsq = allBricks.filter(e => e[0][0] === "b").map(([a,b]) => b);
@@ -16,9 +18,61 @@ const algorithmicPlayer = (possitions) => {
     // Check if AI is in check
     const kingInCheck = checkKing(startPossition, AIBrick.map(e => e.join("")));
 
-    if(kingInCheck.inCheck) {
+    if(kingInCheck.inCheck || AIKingInCheck) {
         // move king out of check or, protect him with other bricks
-        return;
+        const king = allBricks.filter(e => e[0] === "bK").map(e => e.join(""));
+        const kingIndex = allBricks.map(e => e.join("")).indexOf(king.join(""));
+        const allKingMoves = checkBrickMoves(startPossition, kingIndex, "bK");
+        const kingKill = allKingMoves.kill.filter(e => e.x >= 1 && e.x <= 8 && e.y >= 1 && e.y <= 8 && !tsq.includes(String(e.x) + String(e.y)));
+        const kingMoves = allKingMoves.legalBricks.filter(e => e.x >= 1 && e.x <= 8 && e.y >= 1 && e.y <= 8 && !tsq.includes(String(e.x) + String(e.y)));
+        
+        // Make a function that checks if king moves includes in any of the moves that can be made.
+        
+        if(kingKill.length > 0){
+            // A random brick to kill.
+            const kill = kingKill[rnd(kingKill.length)];
+            // The new brick current rnd brick will move to and kill
+            chess.newBrick = String(kill.x) + String(kill.y);
+            // Indexs of all bricks
+            const killIndexs = allBricks.map(([t, i]) => [i.split("").map(e => +e)]).filter((n =>  n[0][0] === kill.x && n[0][1] === kill.y))[0][0];
+            // Index of killed brick
+            const killBrickIndex = allBricks.map(e => e[1]).indexOf(String(killIndexs[0]) + String(killIndexs[1]));
+            // Move random brick
+            moveBrick(kingIndex, false);
+            // Killed selected brick
+            killBrick(killBrickIndex, chess.opponentKillList);
+            const [ opponentBricksTaken ] = $("opponentBricksTaken");
+            updateKillList(chess.opponentKillList, opponentBricksTaken);
+            const [ topX, bottomX, topY, bottomY, chessBoard ] = $("topX,bottomX,topY,bottomY,chessBoard");
+            placeBricks(chessBoard, startPossition, { topX, topY, bottomX, bottomY });
+            // Push type of kill
+            // chess.opponentKillList.push()
+            chess.isMyTurn = true;
+            chess.a = false;
+            chess.brickSelected = false;
+            AIKingInCheck = false;
+            chess.newBrick = Number();
+            return;
+        }
+        else if(kingMoves.length > 0) {
+            // new random move
+            const move = kingMoves[rnd(kingMoves.length)];
+            // The new brick current rnd brick will move
+            chess.newBrick = String(move.x) + String(move.y);
+            // Move random brick
+            moveBrick(kingIndex, false);
+            chess.isMyTurn = true;
+            chess.isAITurn = false;
+            chess.brickSelected = false;
+            AIKingInCheck = false;
+            chess.newBrick = Number();
+            return;
+        }
+        else {
+            // Check if any other bricks can save him.
+            AIKingInCheck = false;
+        }
+        // return;
     }
 
     // List of all the bricks that can be killed.
@@ -88,10 +142,15 @@ const algorithmicPlayer = (possitions) => {
     catch(e) { };
 
 
+    /**
+     * If the king is not in check, no bricks can kill or any better strategic moves
+     * can be made.
+     * Pick a random brick and move it. 
+     */
+
     // a random brick[]
     const newBrick = AIBrick[rnd(AIBrick.length)];
     chess.brickSelected = true;
-
 
     // Index of new brick in allBricks
     const brickIndex = allBricks.indexOf(newBrick);
