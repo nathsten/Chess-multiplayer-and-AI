@@ -13,18 +13,39 @@ const algorithmicPlayer = possitions => {
     // List of all bricks [][]
     const allBricks = possitions.split("/").map(e => e.split(","));
     const tsq = allBricks.filter(e => e[0][0] === "b").map(([a,b]) => b);
+    const tsqBlackIndex = allBricks.filter(e => e[0][0] === "b").map(e => e.join(""));
     // List of all black brick []
     const AIBrick = allBricks.filter(([t, i]) => t[0] === "b");
-    // Check if AI is in check
-    const kingInCheck = checkKing(startPossition, AIBrick.map(e => e.join("")));
+    const myBricks = allBricks.filter(([t, i]) => t[0] === "w");
 
+    // const allBricks = startPossition.split("/").map(e => e.split(","));
+    // const AIBrick = allBricks.filter(([t, i]) => t[0] === "b");
+
+    const checkMyKing = () => {
+        const _AIBrick = startPossition.split("/").map(e => e.split(",")).filter(([t, i]) => t[0] === "b");
+        const MyKingInCheck = checkKing(startPossition, _AIBrick.map(e => e.join("")));
+        if (MyKingInCheck.inCheck) chess.chats.push({sender: "AI", text: "Check!"});
+    }
+
+    // Check if AI is in check
+    chess.algoCheck = true;
+    const kingInCheck = checkKing(startPossition, myBricks.map(e => e.join("")));
+
+    console.log(kingInCheck.inCheck);
+    // Check if AI king is in check works now, but it now thinks that my king is in check all the time!!.....
     if(kingInCheck.inCheck || AIKingInCheck) {
+        // console.log(kingInCheck.inCheck);
+        // console.log(kingInCheck.allKills)
+        // console.log(kingInCheck.allMoves)
+        console.log("inCheck")
+
+
         // move king out of check or, protect him with other bricks
         const king = allBricks.filter(e => e[0] === "bK").map(e => e.join(""));
         const kingIndex = allBricks.map(e => e.join("")).indexOf(king.join(""));
         const allKingMoves = checkBrickMoves(startPossition, kingIndex, "bK");
-        const kingKill = allKingMoves.kill.filter(e => e.x >= 1 && e.x <= 8 && e.y >= 1 && e.y <= 8 && !tsq.includes(String(e.x) + String(e.y)));
-        const kingMoves = allKingMoves.legalBricks.filter(e => e.x >= 1 && e.x <= 8 && e.y >= 1 && e.y <= 8 && !tsq.includes(String(e.x) + String(e.y)));
+        const kingKill = allKingMoves.kill.filter(e => !chess.AIKingNoMoves.includes(String(e.x) + String(e.y)) && !tsq.includes(String(e.x) + String(e.y)));
+        const kingMoves = allKingMoves.legalBricks.filter(e => !chess.AIKingNoMoves.includes(String(e.x) + String(e.y)) && !tsq.includes(String(e.x) + String(e.y)));
         
         // Make a function that checks if king moves includes in any of the moves that can be made.
         
@@ -50,8 +71,10 @@ const algorithmicPlayer = possitions => {
             chess.isMyTurn = true;
             chess.a = false;
             chess.brickSelected = false;
+            chess.algoCheck = false;
             AIKingInCheck = false;
             chess.newBrick = Number();
+            checkMyKing();
             return;
         }
         else if(kingMoves.length > 0) {
@@ -65,7 +88,9 @@ const algorithmicPlayer = possitions => {
             chess.isAITurn = false;
             chess.brickSelected = false;
             AIKingInCheck = false;
+            chess.algoCheck = false;
             chess.newBrick = Number();
+            checkMyKing();
             return;
         }
         else {
@@ -104,7 +129,7 @@ const algorithmicPlayer = possitions => {
     try {
         var selectedKill = typesAndIdexOfKills[0];
         var killer = brickKillList[0];
-    
+        
         typesAndIdexOfKills.forEach((kill, i) => {
             if(brickScore[kill.type[1]] > brickScore[selectedKill.type[1]]) {
                 selectedKill = kill;
@@ -128,8 +153,10 @@ const algorithmicPlayer = possitions => {
         placeBricks(chessBoard, startPossition, { topX, topY, bottomX, bottomY });
         chess.isMyTurn = true;
         chess.isAITurn = false;
+        chess.algoCheck = false;
         chess.brickSelected = false;
         chess.newBrick = Number();
+        checkMyKing();
         const isCheckMate = checkMate(chess.opponentKillList, "b");
         if(isCheckMate) {
             chess.chats.push({sender: "AI", text: "Check Mate!"});
@@ -184,7 +211,9 @@ const algorithmicPlayer = possitions => {
         chess.isMyTurn = true;
         chess.a = false;
         chess.brickSelected = false;
+        chess.algoCheck = false;
         chess.newBrick = Number();
+        checkMyKing();
         return;
     }
     else if(moves.length > 0) {
@@ -196,8 +225,10 @@ const algorithmicPlayer = possitions => {
         moveBrick(brickIndex, false);
         chess.isMyTurn = true;
         chess.isAITurn = false;
+        chess.algoCheck = false;
         chess.brickSelected = false;
         chess.newBrick = Number();
+        checkMyKing();
         return;
     }
     else{

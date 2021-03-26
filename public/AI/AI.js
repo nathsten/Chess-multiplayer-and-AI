@@ -7,10 +7,12 @@ const chess = new Vue({
         brickSelected: false,
         isMyTurn: false,
         isAITurn: false,
+        algoCheck: false,
         selectedBrick: String(),
         newBrick: String(),
         brickColor: "white",
         AIColor: "black",
+        AIKingNoMoves: [],
         isOnline: false,
         brickIndex: Number(),
         leagalBricks: [],
@@ -21,8 +23,9 @@ const chess = new Vue({
     },
     methods: {
         startNewGame: async () => {
-            const getNewGame = await fetch('/newAIGame')
-            startPossition = await getNewGame.json();
+            const getNewGame = await fetch('./sp.json')
+            const spJson = await getNewGame.json();
+            startPossition = spJson.startPossition;
 
             const [ topX, bottomX, topY, bottomY, chessBoard ] = $("topX,bottomX,topY,bottomY,chessBoard");
             placeBricks(chessBoard, startPossition, { topX, topY, bottomX, bottomY });

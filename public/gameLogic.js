@@ -139,6 +139,7 @@ const checkOpenSquareHorizontalVertial = (possitions, type, thisBrickXY, pb) => 
     var mc = chess.brickColor.split("")[0].toLowerCase();
     var oc = mc === "w" ? "b" : "w";
     if(chess.isAITurn) { oc = "w"; mc = "b" };
+    // if(chess.algoCheck) { oc = "b"; mc = "w" };
     var x,y;
 
     var xsActive = true;
@@ -196,7 +197,7 @@ const checkOpenSquareHorizontalVertial = (possitions, type, thisBrickXY, pb) => 
         const y = ys[i] || thisBrickXY[1];
         legalMoves.push({x,y});
     }
-    return legalMoves;
+    return legalMoves.filter(e => e.x >= 1 && e.x <= 8 && e.y >= 1 && e.y <= 8);
 }
 
 /**
@@ -213,6 +214,7 @@ const checkOpenSquareDiagonal = (possitions, type, thisBrickXY, pb) => {
     // opponent color
     var oc = mc === "w" ? "b" : "w";
     if(chess.isAITurn) { oc = "w"; mc = "b" };
+    // if(chess.algoCheck) { oc = "b"; mc = "w" };
     const legalMoves = [];
     var xy1 = true;
     var xy2 = true;
@@ -257,7 +259,7 @@ const checkOpenSquareDiagonal = (possitions, type, thisBrickXY, pb) => {
         if(tsq.includes(oc + CBX4 + CBY4)) xy4 = false;
     }
 
-    return legalMoves
+    return legalMoves.filter(e => e.x >= 1 && e.x <= 8 && e.y >= 1 && e.y <= 8);
 }
 
 /**
@@ -279,6 +281,7 @@ const checkOpenSquareKnight = (possitions, thisBrickXY) => {
     var mc = chess.brickColor.split("")[0].toLowerCase();
     var oc = mc === "w" ? "b" : "w";
     if(chess.isAITurn) { oc = "w"; mc = "b" };
+    // if(chess.algoCheck) { oc = "b"; mc = "w" };
     const legalMoves = [];
 
     possibleMoves.forEach(move => {
@@ -288,7 +291,7 @@ const checkOpenSquareKnight = (possitions, thisBrickXY) => {
         if(!tsq.includes(mc + thisX + thisY)) legalMoves.push({x: +thisX, y: +thisY});
     });
 
-    return legalMoves;
+    return legalMoves.filter(e => e.x >= 1 && e.x <= 8 && e.y >= 1 && e.y <= 8);
 }
 
 /**
@@ -302,6 +305,8 @@ const checkIfBrickCanKill = (birckColor, startPossition, openMoves) => {
     const tsq = sp.map(e => [...e]).map(([a,b,c,d]) => [a,c,d].join(""));
     var c = birckColor === "white" ? "b" : "w";
     if(chess.isAITurn) c = "w";
+    // if(chess.algoCheck) c = "b";
+    // if(chess.algoCheck) c = "b";
     const bricksCanKill = [];
     openMoves.forEach(move => {
         const { x, y } = move;
@@ -337,14 +342,15 @@ const checkIfPawnCanKill = (brickColor, startPossition, thisBrickXY, possibleMov
 }
 
 /**
- * @param {string} startPossition 
+ * @param {string} possitions 
  * @param {string[]} allBricks a list of all the bricks with turn color
  * @returns {{inCheck: boolean, allKills: {x: number, y:number}[][], allMoves: {x: number, y:number}[][]}} if some bricks can kill the king
  */
-const checkKing = (startPossition, allBricks) => {
+const checkKing = (possitions, allBricks) => {
     const color = allBricks[0][0];
     var cc = color === "w" ? "b" : "w";
     if(chess.isAITurn) cc = "w"; 
+    if(chess.algoCheck) cc = "b";
     // List of all bricks that can be killed.
     const allKills = [];
     // List of all moves that can be made
@@ -354,16 +360,19 @@ const checkKing = (startPossition, allBricks) => {
         const brickXY = brick.split("").filter(e => +e).map(e => +e);
         const type = brick.match(/[a-zA-Z]/gm).join("");
         const brickIndex = startPossition.split("/").indexOf(type + "," + brickXY.join(""));
-
         // Every brick's index that can be killed
-        const killBricks = checkBrickMoves(startPossition, brickIndex, type);
-        allKills.push(killBricks.kill);
-        allMoves.push(killBricks.legalBricks)
+        const killBricks = checkBrickMoves(possitions, brickIndex, type);
+        allKills.push({kill: killBricks.kill.filter(e => e.x >= 1 && e.x <= 8 && e.y >= 1 && e.y <= 8), type});
+        allMoves.push({legalBricks: killBricks.legalBricks.filter(e => e.x >= 1 && e.x <= 8 && e.y >= 1 && e.y <= 8), type})
     })
-
-    const pXY = startPossition.split("/").filter(e => e[0] === cc && e[1] === "K").map(e => e.split(",")).map(([a,b]) => b.split("").map(e => +e))
+    const cK = chess.algoCheck ? "b" : undefined;
+    const pXY = possitions.split("/").filter(e => e[0] === (cK || cc) && e[1] === "K").map(e => e.split(",")).map(([a,b]) => b.split("").map(e => +e))
+    if(!pXY[0]){
+        inCheck = true;
+        return {inCheck, allKills, allMoves};
+    }
     allKills.forEach(killList => {
-        killList.forEach((/** @type {{ x: number; y: number; }} */ kill) => {
+        killList.kill.forEach((kill) => {
             const { x, y } = kill;
             // If kings index includes in the killLists
             if(pXY[0][0] === x && pXY[0][1] === y) inCheck = true;

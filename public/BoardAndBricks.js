@@ -191,6 +191,7 @@ const moveBrick = (brickIndex, online) => {
     newStart[brickIndex] = newStart[brickIndex].split(",")[0] + ',' + chess.newBrick;
     startPossition = newStart.join("/");
     var wasMyTurn = chess.isMyTurn;
+
     // send and recive killList from eachother for every move.
     if(online){
         socket.emit('move', {
@@ -223,10 +224,16 @@ const moveBrick = (brickIndex, online) => {
         else {
             chess.chats.push({sender: chess.isAITurn ? "AI": "Me", text: "Check!"});
             AIKingInCheck = true;
+            kingInCheck.allKills.forEach(e => chess.AIKingNoMoves.push(e));
+            
         }    
 
     }
-    if(!online && wasMyTurn) { chess.isAITurn = true; algorithmicPlayer(startPossition); };
+
+    if(!online && wasMyTurn) { 
+        chess.isAITurn = true; 
+        algorithmicPlayer(startPossition); 
+    };
 }
 
 /** 
